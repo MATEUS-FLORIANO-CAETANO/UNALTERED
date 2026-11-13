@@ -3,6 +3,7 @@
 #include "raylib.h"
 #define MAX_BALAS 256
 
+
 // guarda declaracoes das funcoes pro compilador. todo arquivo inclui game.h 
 // (compilador copia e cola os conteudos de game.h nos arquivos)
   
@@ -14,7 +15,7 @@ typedef struct { Rectangle r; Vector2 vel; bool ativo; } Bala;
 // declarado aqui, inicializado em main.c, passa referencia por todas funcoes
 typedef struct {
     estadoGame estado; 
-    Rectangle paredes; 
+    Rectangle caixa; 
     Vector2 jogador; 
     int hp, iframes;
     
@@ -22,8 +23,8 @@ typedef struct {
     // assim, nao precisa alocar dinamicamente
     Bala balas[MAX_BALAS];
 
-    // DURACAO DO ATAQUE, A IMPLEMENTAR
-    int onda; float tempoOnda;
+    int onda; 
+    float tempoOnda, proxSpawn;
 } Game;
 
 // declaracoes: existem em entidades.c

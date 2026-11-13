@@ -1,21 +1,8 @@
-/*******************************************************************************************
-*
-* Este projeto é uma especie de "demake" do sistema de combate dos jogos UNDERTALE e DELTARUNE
-* 
-* Marcos Luan dos Santos
-* Rafael Zapora
-* Mateus Floriano Caetano
-*
-* Códigos utilizados como Base:
-* https://github.com/raysan5/raylib/blob/master/examples/core/core_input_actions.c
-* https://github.com/raysan5/raylib/blob/master/examples/shapes/shapes_following_eyes.c
-*
-********************************************************************************************/
 
 
 #include "game.h"
 // o que main.c gerencia:
-// 1. a unica definicao da struct que carrega os dados do jogo OK
+// 1. a unica definicao da struct que carrega os dados do jogo (OK)
 // 2. inicializa janela, desenha cada frame
 // 2. Input do jogador OK
 // 4. Controle de estados (morreu? venceu?)
@@ -23,8 +10,6 @@
 
 // Definição de tipos e estruturas
 // definicao: ESTADO DO JOGO; essa estrutura carrega todas as informações relevantes frame a frame.
-Game g = {0};
-
 
 // enum: permitir remapeamento de entrada para diferentes teclas.
 // Ao inves de usar `IsKeyDown(KEY_LEFT)`, voce pode usar `IsActionDown(ACTION_LEFT)`, que define como quiser.
@@ -58,9 +43,11 @@ int main(void)
 {
     //-----------------------------------------------------------------------------------------
     // inicializacao
+    Game g = {0};
     const int screenWidth = 640;
     const int screenHeight = 480;
     const int vel = 240;
+    g.hp = 100;
     g.jogador.x = 320;
     g.jogador.y = 240;
 
@@ -77,11 +64,13 @@ int main(void)
 
     SetTargetFPS(60);
     
+    spawn_bala(&g, (Vector2){200, 200}, (Vector2){30, 30});
+
     //--------------------------------------------------------------------------------------
     // loop
     while (!WindowShouldClose()) // Detecta ESC ou botão de fechar no windows
     {
-        int dt = GetFrameTime();
+        float dt = GetFrameTime();
         // movimentacao
         gamepadIndex = 0; // 
         if (IsActionDown(ACTION_UP)) g.jogador.y -= dt*vel;
@@ -93,15 +82,14 @@ int main(void)
             // nao faz nada ainda, placeholder pra uma "defesa"
         }
 
-        /* 
-            Organizar chamados:
-            spawn_bala(Game *g, Vector2 pos, Vector2 vel);
-            att_entidades(Game *g, float dt);
-            desenha_entidades(Game *g);
-        */
+        att_entidades(&g, dt);
 
+    /* parry, nao implementado
         releaseAction = false;
         if (IsActionReleased(ACTION_PARRY)) releaseAction = true;
+    */
+
+    /* TAB
         // tab: WASD <---> SETAS 
         if (IsKeyPressed(KEY_TAB))
         {
@@ -109,6 +97,7 @@ int main(void)
             if (actionSet == 0) SetActionsDefault();
             else SetActionsCursor();
         }
+    */
 
         //----------------------------------------------------------------------------------
         // desenhar 
@@ -117,6 +106,7 @@ int main(void)
 
             ClearBackground(BLACK);
             DrawTexture(alma, g.jogador.x, g.jogador.y, WHITE);
+            desenha_entidades(&g);
 
         EndDrawing();
         //----------------------------------------------------------------------------------

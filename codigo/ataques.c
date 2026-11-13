@@ -1,8 +1,7 @@
 // padrões de ataque e sequência de ondas
-// decide quando e onde as coisas nascem (via spawn_*), 
+// decide quando e onde as coisas nascem (via spawn_bala), 
 // movimento e colisão fica em entidades.c
 
-// AINDA TEM QUE ORGANIZAR NO game.h float proxSpawn, Rectangle caixa
 
 #include "game.h"
 
@@ -33,9 +32,9 @@ static void padrao_chuva(Game *g, float t, float intervalo) {
     // ver se já é hora do próximo spawn
     if (t < g->proxSpawn) return;        // ainda não é hora
     g->proxSpawn += intervalo;           // agenda o próximo spawn
-    */
-
+    
     // spawn_bala(g, GetRandomValue() em lugar acima da caixa, pra baixo)
+    */
 }
 
 /*
@@ -74,14 +73,18 @@ static Onda ondas[] = {
 
 bool att_ondas(Game *g, float dt) {
     // se já passou da última onda
-    // if (g->onda >= NUM_ONDAS) return true;
-
+    if (g->onda >= NUM_ONDAS) return true;
     // tempoOnda soma dt todo frame
-    // g->tempoOnda += dt;
+    g->tempoOnda += dt;
 
-    // chama exec_padrao com tipo, tempo e intervalo da onda atual
+    Onda atual = ondas[g->onda];
+    exec_padrao(g, atual.tipo, g->tempoOnda, atual.intervalo);
 
-    // se passou da duração: próxima onda, zera tempoOnda e proxSpawn
-
-    return false;   // só pra compilar
+    // incrementa indice em ondas[] assim que o ataque acabar
+    if (g->tempoOnda > atual.duracao) {
+        g->onda++;
+        g->tempoOnda = 0;
+        g->proxSpawn = 0;               
+    }
+    return g->onda >= NUM_ONDAS;
 }
