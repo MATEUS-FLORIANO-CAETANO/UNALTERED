@@ -3,7 +3,9 @@ CFLAGS  ?= -Wall -Wextra -O2
 LDLIBS  := $(shell pkg-config --libs raylib) -lm
 CFLAGS  += $(shell pkg-config --cflags raylib)
 
-SRCDIR  := ./codigo
+# diretorio deste Makefile, pra funcionar rodando de qualquer lugar
+MKDIR   := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+SRCDIR  := $(MKDIR)../codigo
 SRCS    := $(wildcard $(SRCDIR)/*.c)
 OBJS    := $(SRCS:.c=.o)
 DEPS    := $(wildcard $(SRCDIR)/*.h)

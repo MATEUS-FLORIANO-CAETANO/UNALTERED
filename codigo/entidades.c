@@ -11,7 +11,7 @@ void spawn_bala(Game *g, Vector2 pos, Vector2 vel) {
     for (i = 0; i < MAX_BALAS; i++) {
         if (!g->balas[i].ativo) break;
     }
-    if (i >= MAX_BALAS) return;   // nenhuma bala livre
+    if (i >= MAX_BALAS) return;   
 
     g->balas[i].r.height = g->balas[i].r.width = 5;
     g->balas[i].r.x = pos.x;
@@ -24,7 +24,7 @@ void spawn_bala(Game *g, Vector2 pos, Vector2 vel) {
 }
 
 void att_entidades(Game *g, float dt) {
-    // mover balas e testar colisão com jogador
+    // mover balas
 
      for (int i = 0; i < MAX_BALAS; i++) {
         if (g->balas[i].ativo) {
@@ -32,7 +32,7 @@ void att_entidades(Game *g, float dt) {
             g->balas[i].r.y += g->balas[i].vel.y*dt;
         }
     }
-    
+   
     // se estiver na hitbox do player, chama dano_player(g);
     // quando sair da tela, ativo = false;
 }

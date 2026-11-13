@@ -1,6 +1,5 @@
-
-
 #include "game.h"
+
 // o que main.c gerencia:
 // 1. a unica definicao da struct que carrega os dados do jogo (OK)
 // 2. inicializa janela, desenha cada frame
@@ -46,14 +45,44 @@ int main(void)
     Game g = {0};
     const int screenWidth = 640;
     const int screenHeight = 480;
-    const int vel = 240;
+    const int vel = 120;
+    const int escala = 2;
+
     g.hp = 100;
     g.jogador.x = 320;
-    g.jogador.y = 240;
+    g.jogador.y = 240 + 70;
 
+    // arena padrao do undertale: interior ~140x130, exterior ~150x140 com a borda.
+    // g.caixa = exterior (que e desenhado); borda de 5px por lado => inner = outer - 10.
+    g.caixa.width = 150;
+    g.caixa.height = 140;
+    // rectangle.x/.y sao o canto superior esquerdo, nao o centro.
+    // subtrai metade da largura/altura pra centralizar a caixa na tela, depois desce.
+    g.caixa.x = screenWidth / 2 - g.caixa.width / 2;
+    g.caixa.y = screenHeight / 2 - g.caixa.height / 2 + 70;
 
-    InitWindow(screenWidth, screenHeight, "UNALTERED");
+    // g.caixa e a aparencia (outer): a borda de 5px e desenhada pra dentro.
+    // inner e a caixa encolhida 5px em cada lado = area jogavel real,
+    // usada pra prender a alma e pra logica de colisao das balas.
+    // (a colisao vive em att_entidades; calcular inner la a partir de g->caixa)
+    // Rectangle inner = {
+    //     g.caixa.x + 5,
+    //     g.caixa.y + 5,
+    //     g.caixa.width  - 2*5,
+    //     g.caixa.height - 2*5
+    // };
 
+    InitWindow(screenWidth * escala, screenHeight * escala, "UNALTERED");
+
+    // Escalar resolucao; 
+    RenderTexture2D alvo = LoadRenderTexture(screenWidth, screenHeight);
+    SetTextureFilter(alvo.texture, TEXTURE_FILTER_POINT);
+
+    // assets sao resolvidos relativo ao diretorio de trabalho.
+    // o executavel fica em build/, mas a pasta assets/ fica na raiz do projeto,
+    // um nivel acima: entra no diretorio do executavel e sobe um nivel.
+    ChangeDirectory(GetApplicationDirectory());
+    ChangeDirectory("..");
     Texture2D alma = LoadTexture("assets/alma.png");
 
     //  Padrao WASD
@@ -100,20 +129,41 @@ int main(void)
     */
 
         //----------------------------------------------------------------------------------
-        // desenhar 
- 
+        // desenhar
+
+        // 1. desenha o jogo na resolucao virtual (640x480), dentro do alvo.
+        //    toda a logica usa essas coordenadas, entao nada aqui muda.
+        BeginTextureMode(alvo);
+
+            ClearBackground(BLACK);
+            DrawRectangleLinesEx(g.caixa, 5, WHITE);
+            // DrawTexture desenha a partir do canto superior esquerdo;
+            // desloca metade do tamanho pra centralizar a alma na posicao do jogador.
+            DrawTexture(alma, g.jogador.x - alma.width / 2.0f, g.jogador.y - alma.height / 2.0f, WHITE);
+
+            desenha_entidades(&g);
+
+        EndTextureMode();
+
+        
+        // 2. estica o alvo pra janela inteira, mantendo a proporcao.
         BeginDrawing();
 
             ClearBackground(BLACK);
-            DrawTexture(alma, g.jogador.x, g.jogador.y, WHITE);
-            desenha_entidades(&g);
+            DrawTexturePro(
+                alvo.texture,
+                // altura NEGATIVA: raylib guarda a render texture invertida no eixo Y
+                (Rectangle){ 0, 0, (float)alvo.texture.width, -(float)alvo.texture.height },
+                (Rectangle){ 0, 0, (float)screenWidth * escala, (float)screenHeight * escala },
+                (Vector2){ 0, 0 }, 0.0f, WHITE);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // fechamento
-    CloseWindow();    
+    UnloadRenderTexture(alvo);
+    CloseWindow();
     return 0;
 }
 
