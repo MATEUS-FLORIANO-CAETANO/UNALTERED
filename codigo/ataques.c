@@ -70,7 +70,6 @@ static Onda ondas[] = {
 
 
 // Chamar 1x por frame no main.c. Retorna true quando acabar ondas (implementar vitoria)
-
 bool att_ondas(Game *g, float dt) {
     // se já passou da última onda
     if (g->onda >= NUM_ONDAS) return true;

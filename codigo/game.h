@@ -7,7 +7,6 @@
 // guarda declaracoes das funcoes pro compilador. todo arquivo inclui game.h 
 // (compilador copia e cola os conteudos de game.h nos arquivos)
   
-
 typedef enum { ESTADO_JOGANDO, ESTADO_MORTE, ESTADO_VITORIA } estadoGame;
 typedef struct { Rectangle r; Vector2 vel; bool ativo; } Bala;
 
