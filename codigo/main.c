@@ -53,16 +53,16 @@ int main(void)
 
     g.hp = 100;
     g.jogador.x = 320;
-    g.jogador.y = 240 + 70;
+    g.jogador.y = 240 + 100;
 
     // arena padrao do undertale: interior ~140x130, exterior ~150x140 com a borda.
-    // g.caixa = exterior (que e desenhado); borda de 5px por lado => inner = outer - 10.
+    // g.caixa = exterior (que e desenhado); borda de 5px por lado; inner = outer - 10.
     g.caixa.width = 150;
     g.caixa.height = 140;
     // rectangle.x/.y sao o canto superior esquerdo, nao o centro.
     // subtrai metade da largura/altura pra centralizar a caixa na tela, depois desce.
     g.caixa.x = screenWidth / 2 - g.caixa.width / 2;
-    g.caixa.y = screenHeight / 2 - g.caixa.height / 2 + 70;
+    g.caixa.y = screenHeight / 2 - g.caixa.height / 2 + 100;
 
     InitWindow(screenWidth * escala, screenHeight * escala, "UNALTERED");
 
@@ -85,7 +85,7 @@ int main(void)
 
     SetTargetFPS(60);
     
-    spawn_bala(&g, (Vector2){200, 200}, (Vector2){80, 60});
+    spawn_bala(&g, (Vector2){200, 200}, (Vector2){20, 10});
 
     //--------------------------------------------------------------------------------------
     // loop
@@ -103,16 +103,15 @@ int main(void)
             // nao faz nada ainda, placeholder pra uma "defesa"
         }
 
-        const float borda = 5;
-        float meiaW = alma.width  / 2.0f;
-        float meiaH = alma.height / 2.0f;
+        float meiaW = alma.width  / 2.0f; // centro x
+        float meiaH = alma.height / 2.0f; // centro y
 
-        // x e y da caixa nao contam borda. hitbox da alma fica no canto e nao no centro. /2 ajeta
+        // x e y da caixa nao contam borda. hitbox da alma fica no canto e nao no centro. / 2 ajeita
     
-        float xMin = g.caixa.x + borda + meiaW; 
-        float xMax = g.caixa.x + g.caixa.width  - borda - meiaW; // direita
-        float yMin = g.caixa.y + borda + meiaH;
-        float yMax = g.caixa.y + g.caixa.height - borda - meiaH;
+        float xMin = g.caixa.x + BORDA + meiaW; 
+        float xMax = g.caixa.x + g.caixa.width  - BORDA - meiaW; // direita
+        float yMin = g.caixa.y + BORDA + meiaH;
+        float yMax = g.caixa.y + g.caixa.height - BORDA - meiaH;
 
         g.jogador.x = Clamp(g.jogador.x, xMin, xMax);
         g.jogador.y = Clamp(g.jogador.y, yMin, yMax);
@@ -149,6 +148,8 @@ int main(void)
             // DrawTexture desenha a partir do canto superior esquerdo
             // desloca metade do tamanho pra centralizar a alma na posicao do jogador
             DrawTexture(alma, g.jogador.x - alma.width / 2.0f, g.jogador.y - alma.height / 2.0f, WHITE);
+
+             DrawText(TextFormat("HP: %d", g.hp), 10, 50, 20, GREEN);
 
             desenha_entidades(&g);
 

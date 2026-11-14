@@ -1,8 +1,9 @@
 #include "game.h"
 
+
 static void dano_player(Game *g) {
     g->hp -= 10;
-    g->iframes = 0.3f;
+    g->iframes = 1.0f;
 }
 
 // TODO: TB DEVE RECEBER ENDERECO DE TEXTURA COMO PARAMETRO
@@ -28,15 +29,24 @@ void att_entidades(Game *g, float dt) {
     // mover balas
 
      for (int i = 0; i < MAX_BALAS; i++) {
-        if (g->balas[i].ativo) {
-            g->balas[i].r.x += g->balas[i].vel.x*dt;
-            g->balas[i].r.y += g->balas[i].vel.y*dt;
+        if (!g->balas[i].ativo) continue;
+        Bala *b = &g->balas[i];
+
+        b->r.x += b->vel.x*dt;
+        b->r.y += b->vel.y*dt;
+
+        Rectangle hitbox = { g->jogador.x - 8, g->jogador.y - 8, 8, 8};
+        if (CheckCollisionRecs(hitbox, b->r) && g->iframes <= 0) dano_player(g);
+
+           // quando sair da tela, ativo = false;
+    if (b->r.x < -20 || b->r.x > 660 || b->r.y < -20 || b->r.y > 500) b->ativo = false;
         }
+
+
+ 
     }
    
-    // se estiver na hitbox do player, chama dano_player(g);
-    // quando sair da tela, ativo = false;
-}
+
 
 void desenha_entidades(Game *g) {
     float dt = GetFrameTime();

@@ -2,7 +2,7 @@
 #define GAME_H
 #include "raylib.h"
 #define MAX_BALAS 256
-
+#define BORDA 5
 
 // guarda declaracoes das funcoes pro compilador. todo arquivo inclui game.h 
 // (compilador copia e cola os conteudos de game.h nos arquivos)

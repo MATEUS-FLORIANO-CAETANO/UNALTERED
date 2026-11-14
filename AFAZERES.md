@@ -1,6 +1,6 @@
 1. Implementar "colisão" com as paredes (OK)
 
-2. Colisao com balas. CheckCollisionRecs()
+2. Colisao com balas. CheckCollisionRecs() (OK)
 
 3. elaborar switch case em main.c. 
     Caso hp = 0, trocar pra ESTADO_MORTE, caso att_ondas retornar 1, acabou os ataques, ESTADO_VITORIA.
