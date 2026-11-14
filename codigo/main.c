@@ -48,7 +48,7 @@ int main(void)
     Game g = {0};
     const int screenWidth = VIRTUAL_W;
     const int screenHeight = VIRTUAL_H;
-    const int vel = 120;
+    const int vel = VEL_JOGADOR;
     const int escala = 2;
 
     g.hp = 100;

@@ -10,6 +10,7 @@
 typedef enum {
     PAD_CHUVA,
     PAD_CIRCULO,
+    PAD_BARREIRA,
     /* ... */
 } TipoAtaque;
 
@@ -66,6 +67,11 @@ static void padrao_chuva(Game *g, float t, float intervalo, float escala) {
 // centro. como cada uma sai um pouco depois da vizinha anti-horaria, a "frente"
 // parece girar com velocidade angular (2*PI/N) / ATRASO.
 static void padrao_circulo(Game *g, float t, float intervalo, float escala) {
+    // textura das balas do anel. descomentar qnd existir e
+    // trocar o NULL do spawn_bala por &jevil.
+    // static Texture2D jevil = { 0 };
+    // if (jevil.id == 0) jevil = LoadTexture("assets/jevil.png");
+
     if (t < g->proxSpawn) return;
     // qual anel e este (0, 1, 2...). roundf pq a soma de floats acumula erro
     int anel = (int)roundf(g->proxSpawn / intervalo);
@@ -99,12 +105,73 @@ static void padrao_circulo(Game *g, float t, float intervalo, float escala) {
         // spawn_bala recebe o canto superior esquerdo, nao o centro
         Vector2 canto = { centroBala.x - tam.x / 2, centroBala.y - tam.y / 2 };
 
-        Bala *b = spawn_bala(g, canto, (Vector2){ 0, 0 }, tam, false, NULL, escala);
+        Bala *b = spawn_bala(g, canto, (Vector2){ 0, 0 }, tam, false, NULL, escala);  // &jevil
         if (b == NULL) return;   // array cheio
 
         // (-cos, +sin) = vetor que aponta da bala pro centro, ja com tamanho 1
         b->acel   = (Vector2){ -ACEL * cs, ACEL * sn };
         b->espera = (horario ? (N - 1 - k) : k) * ATRASO;
+    }
+}
+
+// ---------------------------------------------------------------------------------
+
+// barreira (sans / "flappy bird"): a cada 'intervalo', duas balas finas e altas no
+// mesmo x cobrem toda a altura interna da caixa, menos uma fresta. o par atravessa
+// a caixa de lado. a fresta de cada par fica perto da anterior, pra sempre dar
+// tempo da alma chegar nela.
+static void padrao_barreira(Game *g, float t, float intervalo, float escala) {
+
+    // textura das barreiras. descomentar quando o pixel art existir e 
+    // trocar o NULL dos spawn_bala por &barreira.
+
+    // static Texture2D barreira = { 0 };
+    // if (barreira.id == 0) barreira = LoadTexture("assets/barreira.png");
+
+    // topo da fresta do par anterior. 'static' guarda entre chamadas, e
+    // proxSpawn == 0 so acontece na primeira chamada de cada onda
+    static float frestaY;
+
+    const float VEL    = 140.0f;               // px/s pro lado
+    const int   DIR    = 1;                   // +1 esquerda->direita, -1 direita->esquerda
+    const float LARG   = 12 * escala;          // largura da barreira
+    const float FRESTA = 2.0f * TAM_ALMA;     // altura da fresta (24 px)
+
+    float topo  = g->caixa.y + BORDA;                    // limites internos da caixa
+    float fundo = g->caixa.y + g->caixa.height - BORDA;
+
+    if (g->proxSpawn == 0) frestaY = (topo + fundo - FRESTA) / 2;  // 1o par: fresta no meio
+
+    if (t < g->proxSpawn) return;
+    g->proxSpawn += intervalo;
+
+    // quanto a fresta pode mudar de um par pro proximo: o que a alma anda
+    // em 'intervalo' segundos, com 30% de folga pra reacao do jogador
+    int passo = (int)(VEL_JOGADOR * intervalo * 0.7f);
+    frestaY += GetRandomValue(-passo, passo);
+
+    // nao deixa a fresta sair da caixa
+    if (frestaY < topo)           frestaY = topo;
+    if (frestaY > fundo - FRESTA) frestaY = fundo - FRESTA;
+
+    // nasce logo fora da parede de entrada; recorta = true esconde ate entrar
+    float x = (DIR > 0) ? g->caixa.x + BORDA - LARG
+                        : g->caixa.x + g->caixa.width - BORDA;
+    Vector2 vel = { DIR * VEL, 0 };
+
+    // de cima: do topo da caixa ate a fresta (pula se a fresta encosta no topo)
+    float hCima = frestaY - topo;
+    if (hCima > 0) {
+        Bala *b = spawn_bala(g, (Vector2){ x, topo }, vel, (Vector2){ LARG, hCima }, true, NULL, escala);  // &barreira
+        if (b) b->persiste = true;
+    }
+
+    // de baixo: do fim da fresta ate o fundo da caixa
+    float yBaixo = frestaY + FRESTA;
+    float hBaixo = fundo - yBaixo;
+    if (hBaixo > 0) {
+        Bala *b = spawn_bala(g, (Vector2){ x, yBaixo }, vel, (Vector2){ LARG, hBaixo }, true, NULL, escala);  // &barreira
+        if (b) b->persiste = true;
     }
 }
 
@@ -114,6 +181,7 @@ static void exec_padrao(Game *g, TipoAtaque tipo, float t, float intervalo, floa
     switch (tipo) {
         case PAD_CHUVA:    padrao_chuva(g, t, intervalo, escala);    break;
         case PAD_CIRCULO:  padrao_circulo(g, t, intervalo, escala);  break;
+        case PAD_BARREIRA: padrao_barreira(g, t, intervalo, escala); break;
         /* case PAD_X:   padrao_X(g, t, intervalo, escala);      break; */
         default:         break;
     }
@@ -128,7 +196,8 @@ static Onda ondas[] = {
     //  tipo        duracao  intervalo  escala
    // { PAD_CHUVA,    8.0f,    0.25f,     1.0f },   // chuva leve
    // { PAD_CHUVA,    8.0f,    0.40f,     2.0f },   // chuva pesada
-    { PAD_CIRCULO,  8.0f,    2.0f,      1.0f },   // circulo do jevil
+   //  { PAD_CIRCULO,  8.0f,    2.0f,      1.0f },   // circulo do jevil
+    { PAD_BARREIRA, 8.0f,    0.5f,      1.0f },   // barreiras do sans
 };
 
 // quantidade de ondss = tamanho total / tamanho de cada

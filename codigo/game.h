@@ -9,6 +9,12 @@
 #define VIRTUAL_W 640
 #define VIRTUAL_H 480
 
+// alma: sprite 16x16 (assets/alma.png), hitbox 8x8 no centro.
+// ficam aqui pra os ataques poderem calcular frestas alcancaveis.
+#define TAM_ALMA     16
+#define HITBOX_ALMA  8
+#define VEL_JOGADOR  120   // px/s
+
 // guarda declaracoes das funcoes pro compilador. todo arquivo inclui game.h 
 // (compilador copia e cola os conteudos de game.h nos arquivos)
   
@@ -22,11 +28,13 @@ typedef enum { ESTADO_JOGANDO, ESTADO_MORTE, ESTADO_VITORIA } estadoGame;
 // escala: multiplicador so do desenho do sprite (a hitbox r nao muda com ele).
 // acel: somada na vel todo frame (px/s²). {0,0} = velocidade constante, como antes.
 // espera: segundos parada antes de comecar a se mover (0 = sai na hora).
+// persiste: true = continua existindo depois de acertar a alma (barreiras, ossos).
 typedef struct {
     Rectangle r;
     Vector2 vel, acel;
     float espera;
     bool ativo;
+    bool persiste;
     bool recorta;
     Texture2D *textura;
     float escala;
@@ -51,7 +59,7 @@ typedef struct {
 
 // declaracoes: existem em entidades.c
 // devolve a bala criada (NULL se o array estiver cheio), pro ataque poder
-// mexer em campos extras (acel, espera). quem nao precisa so ignora o retorno.
+// mexer em campos extras (acel, espera, persiste). quem nao precisa so ignora o retorno.
 Bala *spawn_bala(Game *g, Vector2 pos, Vector2 vel, Vector2 tamanho, bool recorta, Texture2D *textura, float escala);
 void att_entidades(Game *g, float dt);
 void desenha_entidades(Game *g);

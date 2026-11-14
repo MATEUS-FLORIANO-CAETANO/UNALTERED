@@ -28,6 +28,7 @@ Bala *spawn_bala(Game *g, Vector2 pos, Vector2 vel, Vector2 tamanho, bool recort
     // o espaco do vetor e reaproveitado, temq zerar pra prox bala
     b->acel = (Vector2){ 0, 0 };
     b->espera = 0;
+    b->persiste = false;
 
     b->ativo = true;
     // o ataque decide:
@@ -66,10 +67,13 @@ void att_entidades(Game *g, float dt) {
         }
 
         // hitbox da alma: 8x8 centrado no jogador (jogador = centro do sprite).
-        Rectangle hitbox = { g->jogador.x - 4, g->jogador.y - 4, 8, 8 };
+        Rectangle hitbox = { g->jogador.x - HITBOX_ALMA / 2, g->jogador.y - HITBOX_ALMA / 2,
+                             HITBOX_ALMA, HITBOX_ALMA };
         if (CheckCollisionRecs(hitbox, b->r)) {
             if (g->iframes <= 0) dano_player(g);
-            b->ativo = false;   // bala some ao dar dano
+            // bala some ao dar dano; barreira continua (os iframes impedem
+            // que ela tire vida todo frame enquanto atravessa a alma)
+            if (!b->persiste) b->ativo = false;
         }
 
            // quando sair da tela, ativo = false;
