@@ -11,35 +11,36 @@ typedef enum {
     /* ... */
 } TipoAtaque;
 
-// cada onda carrega o tipo do ataque, sua duracao (s) e intervalo entre ataques (s)
+// cada onda carrega o tipo do ataque, sua duracao (s), o intervalo entre ataques (s)
+// e a escala das balas (multiplica hitbox e desenho do sprite)
 typedef struct {
     TipoAtaque tipo;
-    float duracao;    
-    float intervalo;   
+    float duracao;
+    float intervalo;
+    float escala;
 } Onda;
 
 /*
- * PADRÕES 
+ * PADRÕES
  * todos tem
  * g -> estado do jogo
  * t -> segundos desde o início da onda atual
  * intervalo -> tempo entre spawns, vindo da tabela de ondas
+ * escala -> multiplicador do tamanho das balas, vindo da tabela de ondas
  */
 
 // chuva: balas nascem acima da caixa em x aleatorio e caem reto pra baixo
-static void padrao_chuva(Game *g, float t, float intervalo) {
-    // carrega o sprite da gota uma vez; fica na memoria ate o jogo fechar.
+static void padrao_chuva(Game *g, float t, float intervalo, float escala) {
     // 'static' guarda entre chamadas, e a janela (contexto GL) ja existe aqui.
     static Texture2D lagrima = { 0 };
     if (lagrima.id == 0) lagrima = LoadTexture("assets/lagrima.png");
 
-    // ver se já é hora do próximo spawn
     if (t < g->proxSpawn) return;        // ainda não é hora
     g->proxSpawn += intervalo;           // agenda o próximo spawn
 
-    // hitbox da gota menor que a imagem: o png e 32x32, o desenho visivel e ~10x13.
-    // dobrada (20x20) junto com o desenho (escala 2) pra deixar as gotas maiores.
-    Vector2 tam = { 20, 20 };
+    // hitbox base 10x10 (o png e 32x32, mas o desenho visivel e ~10x13),
+    // tam multiplicado pela escala da onda
+    Vector2 tam = { 10 * escala * GetRandomValue(1.1, 1.3), 10 * GetRandomValue(1.1, 1.3) };
 
     // faixa horizontal onde a hitbox pode nascer: interior da caixa (sem borda),
     // descontando a largura da hitbox pra não passar da parede direita
@@ -50,25 +51,24 @@ static void padrao_chuva(Game *g, float t, float intervalo) {
     // nasce logo acima do topo da caixa e cai reto pra baixo
     float y = g->caixa.y - tam.y;
     // recorta = true: a chuva nasce acima da caixa, mas so aparece dentro dela
-    spawn_bala(g, (Vector2){ x, y }, (Vector2){ 0, 120 }, tam, true, &lagrima, 2.0f);
+    spawn_bala(g, (Vector2){ x, y }, (Vector2){ 0, 120 }, tam, true, &lagrima, escala);
 }
 
 /*
-static void padrao_circulo(Game *g, float t, float intervalo) {
+static void padrao_circulo(Game *g, float t, float intervalo, float escala) {
     // ...
 }
 */
 
 
-// recebe o tipo do ataque e chama o padrão correspondente, repassando o mesmo tempo e intervalo
-static void exec_padrao(Game *g, TipoAtaque tipo, float t, float intervalo) {
+// recebe o tipo do ataque e chama o padrão correspondente, repassando tempo, intervalo e escala
+static void exec_padrao(Game *g, TipoAtaque tipo, float t, float intervalo, float escala) {
     switch (tipo) {
-        case PAD_CHUVA:  padrao_chuva(g, t, intervalo);  break;
-        /* case PAD_X:   padrao_X(g, t, intervalo);      break; */
+        case PAD_CHUVA:  padrao_chuva(g, t, intervalo, escala);  break;
+        /* case PAD_X:   padrao_X(g, t, intervalo, escala);      break; */
         default:         break;
     }
 }
-
 
 /* 
  * nova onda: linha aqui
@@ -76,9 +76,9 @@ static void exec_padrao(Game *g, TipoAtaque tipo, float t, float intervalo) {
  */
 
 static Onda ondas[] = {
-    //  tipo        duracao  intervalo
-    { PAD_CHUVA,    8.0f,    0.50f },   // chuva leve
-    { PAD_CHUVA,    8.0f,    0.25f },   // chuva pesada
+    //  tipo        duracao  intervalo  escala
+    { PAD_CHUVA,    8.0f,    0.25f,     1.0f },   // chuva leve
+    { PAD_CHUVA,    8.0f,    0.40f,     2.0f },   // chuva pesada
 };
 
 // quantidade de ondas = tamanho total / tamanho de cada
@@ -93,7 +93,7 @@ bool att_ondas(Game *g, float dt) {
     g->tempoOnda += dt;
 
     Onda atual = ondas[g->onda];
-    exec_padrao(g, atual.tipo, g->tempoOnda, atual.intervalo);
+    exec_padrao(g, atual.tipo, g->tempoOnda, atual.intervalo, atual.escala);
 
     // incrementa automaticamente indice em ondas[] assim que o ataque acabar
     if (g->tempoOnda > atual.duracao) {

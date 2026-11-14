@@ -16,6 +16,7 @@ typedef enum { ESTADO_JOGANDO, ESTADO_MORTE, ESTADO_VITORIA } estadoGame;
 
 // r = hitbox (posicao + tamanho). o sprite e desenhado centralizado nela, pois a
 // imagem costuma ser maior que a parte visivel (ex: gota ~10x13 num png 32x32).
+
 // recorta = true -> so e desenhada dentro da caixa (ex: chuva). o ataque decide.
 // textura: ponteiro pra uma Texture2D carregada em outro lugar (NULL = quadrado branco).
 // escala: multiplicador so do desenho do sprite (a hitbox r nao muda com ele).

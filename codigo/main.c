@@ -56,21 +56,23 @@ int main(void)
     g.jogador.y = 240 + 100;
 
     // arena padrao do undertale: interior ~140x130, exterior ~150x140 com a borda.
-    // g.caixa = exterior (que e desenhado); borda de 5px por lado; inner = outer - 10.
+    // g.caixa = exterior (que e desenhado); borda de 5px por lado; interior = exterior - 10.
     g.caixa.width = 150;
     g.caixa.height = 140;
-    // rectangle.x/.y sao o canto superior esquerdo, nao o centro.
+
+    // rectangle x e y sao o canto superior esquerdo, nao o centro.
     // subtrai metade da largura/altura pra centralizar a caixa na tela, depois desce.
     g.caixa.x = screenWidth / 2 - g.caixa.width / 2;
     g.caixa.y = screenHeight / 2 - g.caixa.height / 2 + 100;
 
     InitWindow(screenWidth * escala, screenHeight * escala, "UNALTERED");
 
-    // Escalar resolucao; 
+    // Escalar resolucao
     RenderTexture2D alvo = LoadRenderTexture(screenWidth, screenHeight);
     SetTextureFilter(alvo.texture, TEXTURE_FILTER_POINT);
 
-    // assets sao resolvidos relativo ao diretorio de trabalho.
+    // CLAUDE consertou:
+    // assets sao relativo ao diretorio de trabalho.
     // o executavel fica em build/, mas a pasta assets/ fica na raiz do projeto,
     // um nivel acima: entra no diretorio do executavel e sobe um nivel.
     ChangeDirectory(GetApplicationDirectory());

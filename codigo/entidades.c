@@ -26,9 +26,10 @@ void spawn_bala(Game *g, Vector2 pos, Vector2 vel, Vector2 tamanho, bool recorta
     b->vel.y = vel.y;
 
     b->ativo = true;
-    b->recorta = recorta;   // o ataque decide se a bala e recortada pela caixa
-    b->textura = textura;   // o ataque decide a aparencia da bala
-    b->escala = escala;     // o ataque decide o tamanho do desenho
+    // o ataque decide:
+    b->recorta = recorta;   // e a bala e recortada pela caixa
+    b->textura = textura;   // a aparencia da bala
+    b->escala = escala;     // o tamanho do desenho
 }
 
 // desenha uma bala: o sprite fica centralizado na hitbox (a imagem costuma ser
@@ -54,8 +55,6 @@ void att_entidades(Game *g, float dt) {
         b->r.y += b->vel.y*dt;
 
         // hitbox da alma: 8x8 centrado no jogador (jogador = centro do sprite).
-        // antes deslocava pro canto superior-esquerdo (-8 em vez de -4), por isso
-        // os acertos registravam fora da alma.
         Rectangle hitbox = { g->jogador.x - 4, g->jogador.y - 4, 8, 8 };
         if (CheckCollisionRecs(hitbox, b->r)) {
             if (g->iframes <= 0) dano_player(g);
