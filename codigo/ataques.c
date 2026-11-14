@@ -4,10 +4,12 @@
 
 
 #include "game.h"
+#include <math.h>   // cosf, sinf, roundf (PI ja vem do raylib.h)
 
 // um nome para cada padrão de ataque
 typedef enum {
     PAD_CHUVA,
+    PAD_CIRCULO,
     /* ... */
 } TipoAtaque;
 
@@ -54,17 +56,59 @@ static void padrao_chuva(Game *g, float t, float intervalo, float escala) {
     spawn_bala(g, (Vector2){ x, y }, (Vector2){ 0, 120 }, tam, true, &lagrima, escala);
 }
 
-/*
+// circulo (jevil): a cada 'intervalo' nasce um anel de N balas em volta do centro
+// da caixa. a bala k espera k*ATRASO segundos e entao acelera em linha reta pro
+// centro. como cada uma sai um pouco depois da vizinha anti-horaria, a "frente"
+// parece girar com velocidade angular (2*PI/N) / ATRASO.
 static void padrao_circulo(Game *g, float t, float intervalo, float escala) {
-    // ...
+    if (t < g->proxSpawn) return;
+    // qual anel e este (0, 1, 2...). roundf pq a soma de floats acumula erro
+    int anel = (int)roundf(g->proxSpawn / intervalo);
+    g->proxSpawn += intervalo;
+
+    const int   N      = 8;
+    const float R      = 110.0f;   // raio. caixa ta em y~270..410 e a tela vai ate 480:
+                                   // acima de ~120 a bala de baixo nasce fora e o despawn mata ela
+    const float ACEL   = 350.0f;   // px/s²
+    const float ATRASO = 0.08f;    // s entre uma bala e a vizinha (volta inteira = N*ATRASO)
+
+    Vector2 tam = { 8 * escala, 8 * escala };
+
+    // centro da caixa (trocar por g->jogador = mira onde a alma estava no spawn)
+    Vector2 c = { g->caixa.x + g->caixa.width  / 2,
+                  g->caixa.y + g->caixa.height / 2 };
+
+    // aneis impares giram meio passo, pra nao nascerem em cima das balas
+    // do anel anterior que ainda estao esperando
+    float giro = (anel % 2) * (PI / N);
+
+    for (int k = 0; k < N; k++) {
+        // k=0 em 0 rad (direita do centro), crescendo anti-horario
+        float th = k * 2.0f * PI / N + giro;
+        float cs = cosf(th), sn = sinf(th);
+
+        // y da tela cresce pra baixo: o MENOS no seno mantem o anti-horario
+        Vector2 centroBala = { c.x + R * cs, c.y - R * sn };
+
+        // spawn_bala recebe o canto superior esquerdo, nao o centro
+        Vector2 canto = { centroBala.x - tam.x / 2, centroBala.y - tam.y / 2 };
+
+        // recorta = false: o anel nasce fora da caixa e precisa aparecer
+        Bala *b = spawn_bala(g, canto, (Vector2){ 0, 0 }, tam, false, NULL, escala);
+        if (b == NULL) return;   // array cheio
+
+        // (-cos, +sin) = vetor que aponta da bala pro centro, ja com tamanho 1
+        b->acel   = (Vector2){ -ACEL * cs, ACEL * sn };
+        b->espera = k * ATRASO;
+    }
 }
-*/
 
 
 // recebe o tipo do ataque e chama o padrão correspondente, repassando tempo, intervalo e escala
 static void exec_padrao(Game *g, TipoAtaque tipo, float t, float intervalo, float escala) {
     switch (tipo) {
-        case PAD_CHUVA:  padrao_chuva(g, t, intervalo, escala);  break;
+        case PAD_CHUVA:    padrao_chuva(g, t, intervalo, escala);    break;
+        case PAD_CIRCULO:  padrao_circulo(g, t, intervalo, escala);  break;
         /* case PAD_X:   padrao_X(g, t, intervalo, escala);      break; */
         default:         break;
     }
@@ -79,6 +123,7 @@ static Onda ondas[] = {
     //  tipo        duracao  intervalo  escala
     { PAD_CHUVA,    8.0f,    0.25f,     1.0f },   // chuva leve
     { PAD_CHUVA,    8.0f,    0.40f,     2.0f },   // chuva pesada
+    { PAD_CIRCULO,  8.0f,    0.90f,     1.0f },   // circulo do jevil
 };
 
 // quantidade de ondas = tamanho total / tamanho de cada

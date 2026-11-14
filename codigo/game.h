@@ -20,7 +20,17 @@ typedef enum { ESTADO_JOGANDO, ESTADO_MORTE, ESTADO_VITORIA } estadoGame;
 // recorta = true -> so e desenhada dentro da caixa (ex: chuva). o ataque decide.
 // textura: ponteiro pra uma Texture2D carregada em outro lugar (NULL = quadrado branco).
 // escala: multiplicador so do desenho do sprite (a hitbox r nao muda com ele).
-typedef struct { Rectangle r; Vector2 vel; bool ativo; bool recorta; Texture2D *textura; float escala; } Bala;
+// acel: somada na vel todo frame (px/s²). {0,0} = velocidade constante, como antes.
+// espera: segundos parada antes de comecar a se mover (0 = sai na hora).
+typedef struct {
+    Rectangle r;
+    Vector2 vel, acel;
+    float espera;
+    bool ativo;
+    bool recorta;
+    Texture2D *textura;
+    float escala;
+} Bala;
 
 // prototipo: todas as informacoes que cada frame precisa saber. 
 // declarado aqui, inicializado em main.c, passa referencia por todas funcoes
@@ -40,7 +50,9 @@ typedef struct {
 } Game;
 
 // declaracoes: existem em entidades.c
-void spawn_bala(Game *g, Vector2 pos, Vector2 vel, Vector2 tamanho, bool recorta, Texture2D *textura, float escala);
+// devolve a bala criada (NULL se o array estiver cheio), pro ataque poder
+// mexer em campos extras (acel, espera). quem nao precisa so ignora o retorno.
+Bala *spawn_bala(Game *g, Vector2 pos, Vector2 vel, Vector2 tamanho, bool recorta, Texture2D *textura, float escala);
 void att_entidades(Game *g, float dt);
 void desenha_entidades(Game *g);
 

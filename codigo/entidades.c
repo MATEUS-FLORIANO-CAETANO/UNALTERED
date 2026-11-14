@@ -6,12 +6,12 @@ static void dano_player(Game *g) {
     g->iframes = 1.0f;
 }
 
-void spawn_bala(Game *g, Vector2 pos, Vector2 vel, Vector2 tamanho, bool recorta, Texture2D *textura, float escala) {
+Bala *spawn_bala(Game *g, Vector2 pos, Vector2 vel, Vector2 tamanho, bool recorta, Texture2D *textura, float escala) {
     int i;
     for (i = 0; i < MAX_BALAS; i++) {
         if (!g->balas[i].ativo) break;
     }
-    if (i >= MAX_BALAS) return;
+    if (i >= MAX_BALAS) return NULL;
 
     Bala *b = &g->balas[i];
 
@@ -25,11 +25,17 @@ void spawn_bala(Game *g, Vector2 pos, Vector2 vel, Vector2 tamanho, bool recorta
     b->vel.x = vel.x;
     b->vel.y = vel.y;
 
+    // o slot e reaproveitado: sem zerar, a bala nova herdaria acel/espera
+    // da ultima que morou aqui. quem quiser outro valor muda pelo retorno.
+    b->acel = (Vector2){ 0, 0 };
+    b->espera = 0;
+
     b->ativo = true;
     // o ataque decide:
     b->recorta = recorta;   // e a bala e recortada pela caixa
     b->textura = textura;   // a aparencia da bala
     b->escala = escala;     // o tamanho do desenho
+    return b;
 }
 
 // desenha uma bala: o sprite fica centralizado na hitbox (a imagem costuma ser
@@ -51,8 +57,15 @@ void att_entidades(Game *g, float dt) {
         if (!g->balas[i].ativo) continue;
         Bala *b = &g->balas[i];
 
-        b->r.x += b->vel.x*dt;
-        b->r.y += b->vel.y*dt;
+        // ainda esperando: fica parada (mas continua colidindo, abaixo)
+        if (b->espera > 0) {
+            b->espera -= dt;
+        } else {
+            b->vel.x += b->acel.x*dt;   // primeiro a velocidade...
+            b->vel.y += b->acel.y*dt;
+            b->r.x += b->vel.x*dt;      // ...depois a posicao
+            b->r.y += b->vel.y*dt;
+        }
 
         // hitbox da alma: 8x8 centrado no jogador (jogador = centro do sprite).
         Rectangle hitbox = { g->jogador.x - 4, g->jogador.y - 4, 8, 8 };
@@ -62,7 +75,7 @@ void att_entidades(Game *g, float dt) {
         }
 
            // quando sair da tela, ativo = false;
-    if (b->r.x < -20 || b->r.x > 660 || b->r.y < -20 || b->r.y > 500) b->ativo = false;
+    if (b->r.x < -20 || b->r.x > VIRTUAL_W + 20 || b->r.y < -20 || b->r.y > VIRTUAL_H + 20) b->ativo = false;
         }
 
 
