@@ -85,38 +85,61 @@ int main(void)
 
     SetTargetFPS(60);
     
-    spawn_bala(&g, (Vector2){200, 200}, (Vector2){20, 10});
+    spawn_bala(&g, (Vector2){200, 300}, (Vector2){20, 10});
 
     //--------------------------------------------------------------------------------------
     // loop
     while (!WindowShouldClose()) // Detecta ESC ou botão de fechar no windows
     {
         float dt = GetFrameTime();
-        // movimentacao
-        gamepadIndex = 0; // 
-        if (IsActionDown(ACTION_UP)) g.jogador.y -= dt*vel;
-        if (IsActionDown(ACTION_DOWN)) g.jogador.y += dt*vel;
-        if (IsActionDown(ACTION_LEFT)) g.jogador.x -= dt*vel;
-        if (IsActionDown(ACTION_RIGHT)) g.jogador.x += dt*vel;
-        if (IsActionPressed(ACTION_PARRY))
+
+        // controle de estados:
+        // ESTADO_MORTE e ESTADO_VITORIA quebram o jogo por enquanto
+        switch (g.estado)
         {
-            // nao faz nada ainda, placeholder pra uma "defesa"
+        case ESTADO_JOGANDO:
+        {
+            // movimentacao
+            gamepadIndex = 0; //
+            if (IsActionDown(ACTION_UP)) g.jogador.y -= dt*vel;
+            if (IsActionDown(ACTION_DOWN)) g.jogador.y += dt*vel;
+            if (IsActionDown(ACTION_LEFT)) g.jogador.x -= dt*vel;
+            if (IsActionDown(ACTION_RIGHT)) g.jogador.x += dt*vel;
+            if (IsActionPressed(ACTION_PARRY))
+            {
+                // nao faz nada ainda, placeholder pra uma "defesa"
+            }
+
+            float meiaW = alma.width  / 2.0f; // centro x
+            float meiaH = alma.height / 2.0f; // centro y
+
+            // x e y da caixa nao contam borda. hitbox da alma fica no canto e nao no centro. / 2 ajeita
+
+            float xMin = g.caixa.x + BORDA + meiaW;
+            float xMax = g.caixa.x + g.caixa.width  - BORDA - meiaW; // direita
+            float yMin = g.caixa.y + BORDA + meiaH;
+            float yMax = g.caixa.y + g.caixa.height - BORDA - meiaH;
+
+            g.jogador.x = Clamp(g.jogador.x, xMin, xMax);
+            g.jogador.y = Clamp(g.jogador.y, yMin, yMax);
+
+            att_entidades(&g, dt);
+
+            // sequencia de ondas retorna true quando todos os ataques acabam -> vitoria
+            if (att_ondas(&g, dt)) g.estado = ESTADO_VITORIA;
+
+            
+            if (g.hp <= 0) g.estado = ESTADO_MORTE;
+        } break;
+
+        case ESTADO_MORTE:
+            // tela de morte (a implementar)
+            break;
+
+        case ESTADO_VITORIA:
+            // tela de vitoria (a implementar)
+            break;
         }
-
-        float meiaW = alma.width  / 2.0f; // centro x
-        float meiaH = alma.height / 2.0f; // centro y
-
-        // x e y da caixa nao contam borda. hitbox da alma fica no canto e nao no centro. / 2 ajeita
-    
-        float xMin = g.caixa.x + BORDA + meiaW; 
-        float xMax = g.caixa.x + g.caixa.width  - BORDA - meiaW; // direita
-        float yMin = g.caixa.y + BORDA + meiaH;
-        float yMax = g.caixa.y + g.caixa.height - BORDA - meiaH;
-
-        g.jogador.x = Clamp(g.jogador.x, xMin, xMax);
-        g.jogador.y = Clamp(g.jogador.y, yMin, yMax);
-
-        att_entidades(&g, dt);
 
     /* parry, nao implementado
         releaseAction = false;
@@ -149,7 +172,7 @@ int main(void)
             // desloca metade do tamanho pra centralizar a alma na posicao do jogador
             DrawTexture(alma, g.jogador.x - alma.width / 2.0f, g.jogador.y - alma.height / 2.0f, WHITE);
 
-             DrawText(TextFormat("HP: %d", g.hp), 10, 50, 20, GREEN);
+             DrawText(TextFormat("HP: %d; ESTADO: %d", g.hp, g.estado), 10, 50, 20, GREEN);
 
             desenha_entidades(&g);
 
