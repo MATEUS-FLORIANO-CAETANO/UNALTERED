@@ -3,6 +3,9 @@
 // Clamp() 
 #include "raymath.h"
 
+
+Sound dano;
+
 // o que main.c gerencia:
 // 1. a unica definicao da struct que carrega os dados do jogo (OK)
 // 2. inicializa janela, desenha cada frame
@@ -40,6 +43,7 @@ static bool IsActionDown(int action);       // durante acao
 
 static void SetActionsDefault(void);        // define WASD
 static void SetActionsCursor(void);         // define setinhas
+static void desenha_olho(Vector2 centro, Vector2 alvo); // olho que segue o alvo (raylib shapes_following_eyes)
 
 int main(void)
 {
@@ -66,7 +70,9 @@ int main(void)
     g.caixa.y = screenHeight / 2 - g.caixa.height / 2 + 100;
 
     InitWindow(screenWidth * escala, screenHeight * escala, "UNALTERED");
-
+    InitAudioDevice();
+    
+    
     // Escalar resolucao
     RenderTexture2D alvo = LoadRenderTexture(screenWidth, screenHeight);
     SetTextureFilter(alvo.texture, TEXTURE_FILTER_POINT);
@@ -77,7 +83,11 @@ int main(void)
     // um nivel acima: entra no diretorio do executavel e sobe um nivel.
     ChangeDirectory(GetApplicationDirectory());
     ChangeDirectory("..");
+    dano = LoadSound("assets/snd-hurt1.ogg");      
     Texture2D alma = LoadTexture("assets/alma.png");
+    // olhos: descomentar quando os arquivos existirem (ver desenha_olho)
+    // Texture2D esclera = LoadTexture("assets/esclera.png");
+    // Texture2D iris    = LoadTexture("assets/iris.png");
 
     //  Padrao WASD
     char actionSet = 0;
@@ -176,6 +186,10 @@ int main(void)
 
             desenha_entidades(&g);
 
+            // olhos acima da caixa, seguindo a alma
+            desenha_olho((Vector2){ screenWidth / 2.0f - 50, 130 }, g.jogador);
+            desenha_olho((Vector2){ screenWidth / 2.0f + 50, 130 }, g.jogador);
+
         EndTextureMode();
 
         
@@ -196,7 +210,13 @@ int main(void)
 
     // fechamento
     UnloadRenderTexture(alvo);
+    UnloadSound(dano);
+    // UnloadTexture(esclera);
+    // UnloadTexture(iris);
     CloseWindow();
+       
+
+    CloseAudioDevice();     
     return 0;
 }
 
@@ -260,4 +280,36 @@ static void SetActionsCursor(void)
     actionInputs[ACTION_LEFT].button = GAMEPAD_BUTTON_RIGHT_FACE_LEFT;
     actionInputs[ACTION_RIGHT].button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT;
     actionInputs[ACTION_PARRY].button = GAMEPAD_BUTTON_LEFT_FACE_DOWN;
+}
+
+// olho (esclera + iris + pupila) cuja iris aponta pro alvo sem sair da esclera.
+// adaptado de raylib/examples/shapes/shapes_following_eyes.c
+static void desenha_olho(Vector2 centro, Vector2 alvo)
+{
+    const float raioEsclera = 40.0f;
+    const float raioIris = 12.0f;
+
+    Vector2 iris = alvo;
+    // se o alvo esta fora do alcance, prende a iris na borda da esclera na direcao do alvo
+    if (!CheckCollisionPointCircle(iris, centro, raioEsclera - raioIris))
+    {
+        float angulo = atan2f(alvo.y - centro.y, alvo.x - centro.x);
+        iris.x = centro.x + (raioEsclera - raioIris) * cosf(angulo);
+        iris.y = centro.y + (raioEsclera - raioIris) * sinf(angulo);
+    }
+
+    DrawCircleV(centro, raioEsclera, LIGHTGRAY);
+    DrawCircleV(iris, raioIris, BROWN);
+    DrawCircleV(iris, 5, BLACK);
+
+    /* versao com textura (quando assets/esclera.png e assets/iris.png existirem):
+       1. assinatura vira: desenha_olho(Vector2 centro, Vector2 alvo, Texture2D texEsclera, Texture2D texIris)
+          (atualizar a declaracao la em cima e as duas chamadas: ..., g.jogador, esclera, iris)
+       2. raios vem do tamanho das imagens:
+            const float raioEsclera = texEsclera.width / 2.0f;
+            const float raioIris    = texIris.width / 2.0f;
+       3. troca os tres DrawCircleV por (DrawTexture desenha do canto superior esquerdo, entao centraliza):
+            DrawTexture(texEsclera, centro.x - texEsclera.width / 2.0f, centro.y - texEsclera.height / 2.0f, WHITE);
+            DrawTexture(texIris,    iris.x   - texIris.width    / 2.0f, iris.y   - texIris.height    / 2.0f, WHITE);
+    */
 }

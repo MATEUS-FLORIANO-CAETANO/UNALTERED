@@ -1,7 +1,7 @@
 #include "game.h"
 
-
 static void dano_player(Game *g) {
+    PlaySound(dano);
     g->hp -= 10;
     g->iframes = 1.0f;
 }

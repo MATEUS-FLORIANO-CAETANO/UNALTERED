@@ -15,6 +15,8 @@
 #define HITBOX_ALMA  8
 #define VEL_JOGADOR  120   // px/s
 
+
+extern Sound dano;
 // guarda declaracoes das funcoes pro compilador. todo arquivo inclui game.h 
 // (compilador copia e cola os conteudos de game.h nos arquivos)
   

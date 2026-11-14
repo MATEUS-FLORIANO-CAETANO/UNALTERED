@@ -88,13 +88,19 @@ static Vector2 rumo(Vector2 de, Vector2 para, float modulo) {
 
 // chuva: balas nascem acima da caixa em x aleatorio e caem reto pra baixo
 static void padrao_chuva(Game *g, Onda o, int n) {
-    (void)n;   // a chuva nao depende de qual disparo e
+    
+    (void)n;   // a chuva nao depende de qual disparo esta
     static Texture2D lagrima = { 0 };   // static: carrega a textura uma vez so
     if (lagrima.id == 0) lagrima = LoadTexture("assets/lagrima.png");
 
-    // hitbox base 10x10 (o png e 32x32, mas o desenho visivel e ~10x13), +10..30%
-    float w = 10 * o.escala * GetRandomValue(110, 130) / 100.0f;
-    float h = 10 * o.escala * GetRandomValue(110, 130) / 100.0f;
+    // tamanho aleatorio: +10% a +100%. um sorteio so, usado na hitbox E no sprite,
+    // pra o desenho crescer junto (o sprite tem escala uniforme, nao da pra esticar w e h separados)
+    float fator = GetRandomValue(110, 200) / 100.0f;
+    float escala = o.escala * fator;
+
+    // hitbox base 10x10 (o png e 32x32, mas o desenho visivel e ~10x13)
+    float w = 10 * escala;
+    float h = 10 * escala;
 
     // x aleatorio dentro da caixa, sem passar da parede direita
     Rectangle in = interior(g);
@@ -105,7 +111,7 @@ static void padrao_chuva(Game *g, Onda o, int n) {
         .vel     = { 0, 120 },
         .recorta = true,                          // so aparece quando entra
         .textura = &lagrima,
-        .escala  = o.escala,
+        .escala  = escala,                       
     });
 }
 
@@ -113,20 +119,19 @@ static void padrao_chuva(Game *g, Onda o, int n) {
 
 // circulo (jevil): a cada disparo nasce um anel de N balas em volta do centro da
 // caixa. a bala k espera k*ATRASO segundos e entao acelera em linha reta pro centro.
-// como cada uma sai um pouco depois da vizinha, a "frente" parece girar.
 static void padrao_circulo(Game *g, Onda o, int n) {
+
     // static Texture2D jevil = { 0 };
     // if (jevil.id == 0) jevil = LoadTexture("assets/jevil.png");
 
     const int   N      = 8;
     const float RAIO   = 110.0f;   // acima de ~120 a bala de baixo nasce fora da tela
-    const float ACEL   = 300.0f;   // px/s²
+    const float ACEL   = 200.0f;   // px/s²
     const float ATRASO = 0.10f;    // s entre uma bala e a vizinha (volta = N*ATRASO)
     const float TAM    = 8 * o.escala;
 
     Vector2 c = centro(g->caixa);
 
-    // aneis impares giram meio passo, pra nao nascerem em cima do anel anterior
     float giro = (n % 2) * (PI / N);
     int horario = GetRandomValue(0, 1);
 
@@ -211,10 +216,10 @@ static void exec_padrao(Game *g, Onda o, int n) {
 
 static Onda ondas[] = {
     //  tipo        duracao  intervalo  escala
-   // { PAD_CHUVA,    8.0f,    0.25f,     1.0f },   // chuva leve
+    { PAD_CHUVA,    8.0f,    0.25f,     1.0f },   // chuva leve
    // { PAD_CHUVA,    8.0f,    0.40f,     2.0f },   // chuva pesada
-   //  { PAD_CIRCULO,  8.0f,    2.0f,      1.0f },   // circulo do jevil
-    { PAD_BARREIRA, 8.0f,    0.5f,      1.0f },   // barreiras do sans
+     { PAD_CIRCULO,  8.0f,    2.0f,      1.0f },   // circulo do jevil
+    { PAD_BARREIRA, 8.0f,    0.4f,      1.0f },   // barreiras do sans
 };
 
 // quantidade de ondas = tamanho total / tamanho de cada
