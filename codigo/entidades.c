@@ -6,36 +6,22 @@ static void dano_player(Game *g) {
     g->iframes = 1.0f;
 }
 
-Bala *spawn_bala(Game *g, Vector2 pos, Vector2 vel, Vector2 tamanho, bool recorta, Texture2D *textura, float escala) {
-    int i;
-    for (i = 0; i < MAX_BALAS; i++) {
-        if (!g->balas[i].ativo) break;
+void spawn_bala(Game *g, Bala nova) {
+    // sem tamanho = nada pra criar (ex: barreira com a fresta encostada no topo)
+    if (nova.r.width <= 0 || nova.r.height <= 0) return;
+
+    // escala nao preenchida (0) desenharia o sprite com tamanho zero
+    if (nova.escala == 0) nova.escala = 1;
+    nova.ativo = true;
+
+    for (int i = 0; i < MAX_BALAS; i++) {
+        if (!g->balas[i].ativo) {
+            // copia a struct inteira: nao sobra nada da bala que morava aqui
+            g->balas[i] = nova;
+            return;
+        }
     }
-    if (i >= MAX_BALAS) return NULL;
-
-    Bala *b = &g->balas[i];
-
-    // hitbox independente do sprite: o ataque passa o tamanho, pois a imagem pode
-    // ter bordas transparentes (ex: gota ~10x13 dentro de um png 32x32)
-    b->r.width  = tamanho.x;
-    b->r.height = tamanho.y;
-    b->r.x = pos.x;
-    b->r.y = pos.y;
-
-    b->vel.x = vel.x;
-    b->vel.y = vel.y;
-
-    // o espaco do vetor e reaproveitado, temq zerar pra prox bala
-    b->acel = (Vector2){ 0, 0 };
-    b->espera = 0;
-    b->persiste = false;
-
-    b->ativo = true;
-    // o ataque decide:
-    b->recorta = recorta;   // e a bala e recortada pela caixa
-    b->textura = textura;   // a aparencia da bala
-    b->escala = escala;     // o tamanho do desenho
-    return b;
+    // array cheio: a bala nao nasce
 }
 
 // sem sprite desenha quadrado
