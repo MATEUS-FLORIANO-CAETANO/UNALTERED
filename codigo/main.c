@@ -46,8 +46,8 @@ int main(void)
     //-----------------------------------------------------------------------------------------
     // inicializacao
     Game g = {0};
-    const int screenWidth = 640;
-    const int screenHeight = 480;
+    const int screenWidth = VIRTUAL_W;
+    const int screenHeight = VIRTUAL_H;
     const int vel = 120;
     const int escala = 2;
 
@@ -84,8 +84,6 @@ int main(void)
 
 
     SetTargetFPS(60);
-    
-    spawn_bala(&g, (Vector2){200, 300}, (Vector2){20, 10});
 
     //--------------------------------------------------------------------------------------
     // loop

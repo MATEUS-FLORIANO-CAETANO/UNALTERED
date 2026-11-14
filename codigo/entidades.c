@@ -7,21 +7,24 @@ static void dano_player(Game *g) {
 }
 
 // TODO: TB DEVE RECEBER ENDERECO DE TEXTURA COMO PARAMETRO
-void spawn_bala(Game *g, Vector2 pos, Vector2 vel /*,Texture2D *textura*/) {
+void spawn_bala(Game *g, Vector2 pos, Vector2 vel, bool recorta /*,Texture2D *textura*/) {
     int i;
     for (i = 0; i < MAX_BALAS; i++) {
         if (!g->balas[i].ativo) break;
     }
-    if (i >= MAX_BALAS) return;   
+    if (i >= MAX_BALAS) return;
 
-    g->balas[i].r.height = g->balas[i].r.width = 5;
-    g->balas[i].r.x = pos.x;
-    g->balas[i].r.y = pos.y;
+    Bala *b = &g->balas[i];
 
-    g->balas[i].vel.x = vel.x;
-    g->balas[i].vel.y = vel.y;
+    b->r.height = g->balas[i].r.width = 5;
+    b->r.x = pos.x;
+    b->r.y = pos.y;
 
-    g->balas[i].ativo = true;
+    b->vel.x = vel.x;
+    b->vel.y = vel.y;
+
+    b->ativo = true;
+    b->recorta = recorta;   // o ataque decide se a bala e recortada pela caixa
     /*g->balas.textura = textura; */
 }
 
@@ -53,13 +56,26 @@ void desenha_entidades(Game *g) {
     // decrementa imunidade
     if (g->iframes > 0) g->iframes -= dt;
     
-    // desenha balas
+    // balas sem recorte: aparecem em qualquer lugar da tela
     for (int i = 0; i < MAX_BALAS; i++) {
-        if (g->balas[i].ativo) {
+        if (g->balas[i].ativo && !g->balas[i].recorta) {
             DrawRectangleRec(g->balas[i].r, WHITE);
         }
     }
- 
-    // pra ataques que so devem aparecer dentro das paredes, use BeginScissorMode(caixa) e dps EndScissorMode(caixa);
+
+    // balas com recorte: so aparecem dentro da caixa (ex: chuva, que nasce acima
+    // das paredes).
+    BeginScissorMode((int)(g->caixa.x + BORDA),
+                     (int)(g->caixa.y + BORDA),
+                     (int)(g->caixa.width  - 2 * BORDA),
+                     (int)(g->caixa.height - 2 * BORDA));
+
+    for (int i = 0; i < MAX_BALAS; i++) {
+        if (g->balas[i].ativo && g->balas[i].recorta) {
+            DrawRectangleRec(g->balas[i].r, WHITE);
+        }
+    }
+
+    EndScissorMode();
 }
 

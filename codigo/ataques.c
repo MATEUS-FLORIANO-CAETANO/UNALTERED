@@ -26,15 +26,22 @@ typedef struct {
  * intervalo -> tempo entre spawns, vindo da tabela de ondas
  */
 
-// chuva
+// chuva: balas nascem acima da caixa em x aleatorio e caem reto pra baixo
 static void padrao_chuva(Game *g, float t, float intervalo) {
-    /*
     // ver se já é hora do próximo spawn
     if (t < g->proxSpawn) return;        // ainda não é hora
     g->proxSpawn += intervalo;           // agenda o próximo spawn
-    
-    // spawn_bala(g, GetRandomValue() em lugar acima da caixa, pra baixo)
-    */
+
+    // faixa horizontal onde a bala pode nascer: interior da caixa (sem borda),
+    // descontando a largura da bala (5) pra não passar da parede direita
+    int xMin = (int)(g->caixa.x + BORDA);
+    int xMax = (int)(g->caixa.x + g->caixa.width - BORDA - 5);
+    float x = (float)GetRandomValue(xMin, xMax);
+
+    // nasce um pouco acima do topo da caixa e cai reto pra baixo
+    float y = g->caixa.y - 10;
+    // recorta = true: a chuva nasce acima da caixa, mas so aparece dentro dela
+    spawn_bala(g, (Vector2){ x, y }, (Vector2){ 0, 120 }, true);
 }
 
 /*
@@ -54,7 +61,7 @@ static void exec_padrao(Game *g, TipoAtaque tipo, float t, float intervalo) {
 }
 
 
-/* TABELA
+/* 
  * nova onda: linha aqui
  * novo ataque: nome em enum, função padrao, case no switch
  */
