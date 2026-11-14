@@ -4,9 +4,9 @@
 
 
 #include "game.h"
-#include <math.h>   // cosf, sinf, roundf (PI ja vem do raylib.h)
+#include <math.h>   // trig do circulo
 
-// um nome para cada padrão de ataque
+// um nome para cada padrão
 typedef enum {
     PAD_CHUVA,
     PAD_CIRCULO,
@@ -31,9 +31,11 @@ typedef struct {
  * escala -> multiplicador do tamanho das balas, vindo da tabela de ondas
  */
 
+ // -------------------------------------------------------------------------------
+
 // chuva: balas nascem acima da caixa em x aleatorio e caem reto pra baixo
 static void padrao_chuva(Game *g, float t, float intervalo, float escala) {
-    // 'static' guarda entre chamadas, e a janela (contexto GL) ja existe aqui.
+    // 'static' guarda entre chamadas pra evitar carregar a textura repetidamente.
     static Texture2D lagrima = { 0 };
     if (lagrima.id == 0) lagrima = LoadTexture("assets/lagrima.png");
 
@@ -42,7 +44,7 @@ static void padrao_chuva(Game *g, float t, float intervalo, float escala) {
 
     // hitbox base 10x10 (o png e 32x32, mas o desenho visivel e ~10x13),
     // tam multiplicado pela escala da onda
-    Vector2 tam = { 10 * escala * GetRandomValue(1.1, 1.3), 10 * GetRandomValue(1.1, 1.3) };
+    Vector2 tam = { 10 * escala * GetRandomValue(110, 130) / 100.0f, 10 * escala * GetRandomValue(110, 130) / 100.0f };
 
     // faixa horizontal onde a hitbox pode nascer: interior da caixa (sem borda),
     // descontando a largura da hitbox pra não passar da parede direita
@@ -56,6 +58,9 @@ static void padrao_chuva(Game *g, float t, float intervalo, float escala) {
     spawn_bala(g, (Vector2){ x, y }, (Vector2){ 0, 120 }, tam, true, &lagrima, escala);
 }
 
+// ---------------------------------------------------------------------------------
+
+
 // circulo (jevil): a cada 'intervalo' nasce um anel de N balas em volta do centro
 // da caixa. a bala k espera k*ATRASO segundos e entao acelera em linha reta pro
 // centro. como cada uma sai um pouco depois da vizinha anti-horaria, a "frente"
@@ -68,19 +73,20 @@ static void padrao_circulo(Game *g, float t, float intervalo, float escala) {
 
     const int   N      = 8;
     const float R      = 110.0f;   // raio. caixa ta em y~270..410 e a tela vai ate 480:
-                                   // acima de ~120 a bala de baixo nasce fora e o despawn mata ela
-    const float ACEL   = 350.0f;   // px/s²
-    const float ATRASO = 0.08f;    // s entre uma bala e a vizinha (volta inteira = N*ATRASO)
+    const float ACEL   = 300.0f;   // px/s ao quadradp
+    const float ATRASO = 0.10f;    // s entre uma bala e a vizinha (volta inteira = N*ATRASO)
 
     Vector2 tam = { 8 * escala, 8 * escala };
 
-    // centro da caixa (trocar por g->jogador = mira onde a alma estava no spawn)
+    // centro da caixa
     Vector2 c = { g->caixa.x + g->caixa.width  / 2,
                   g->caixa.y + g->caixa.height / 2 };
 
     // aneis impares giram meio passo, pra nao nascerem em cima das balas
     // do anel anterior que ainda estao esperando
     float giro = (anel % 2) * (PI / N);
+
+    int horario = GetRandomValue(0, 1);
 
     for (int k = 0; k < N; k++) {
         // k=0 em 0 rad (direita do centro), crescendo anti-horario
@@ -93,13 +99,12 @@ static void padrao_circulo(Game *g, float t, float intervalo, float escala) {
         // spawn_bala recebe o canto superior esquerdo, nao o centro
         Vector2 canto = { centroBala.x - tam.x / 2, centroBala.y - tam.y / 2 };
 
-        // recorta = false: o anel nasce fora da caixa e precisa aparecer
         Bala *b = spawn_bala(g, canto, (Vector2){ 0, 0 }, tam, false, NULL, escala);
         if (b == NULL) return;   // array cheio
 
         // (-cos, +sin) = vetor que aponta da bala pro centro, ja com tamanho 1
         b->acel   = (Vector2){ -ACEL * cs, ACEL * sn };
-        b->espera = k * ATRASO;
+        b->espera = (horario ? (N - 1 - k) : k) * ATRASO;
     }
 }
 
@@ -121,16 +126,16 @@ static void exec_padrao(Game *g, TipoAtaque tipo, float t, float intervalo, floa
 
 static Onda ondas[] = {
     //  tipo        duracao  intervalo  escala
-    { PAD_CHUVA,    8.0f,    0.25f,     1.0f },   // chuva leve
-    { PAD_CHUVA,    8.0f,    0.40f,     2.0f },   // chuva pesada
-    { PAD_CIRCULO,  8.0f,    0.90f,     1.0f },   // circulo do jevil
+   // { PAD_CHUVA,    8.0f,    0.25f,     1.0f },   // chuva leve
+   // { PAD_CHUVA,    8.0f,    0.40f,     2.0f },   // chuva pesada
+    { PAD_CIRCULO,  8.0f,    2.0f,      1.0f },   // circulo do jevil
 };
 
-// quantidade de ondas = tamanho total / tamanho de cada
+// quantidade de ondss = tamanho total / tamanho de cada
 #define NUM_ONDAS ((int)(sizeof(ondas) / sizeof(ondas[0])))
 
 
-// Chamadp 1x por frame no main.c. Retorna true quando acabar ondas (implementar vitoria)
+// chamadp 1x por frame no main.c. Retorna true quando acabar ondas (implementar vitoria)
 bool att_ondas(Game *g, float dt) {
     // se já passou da última onda
     if (g->onda >= NUM_ONDAS) return true;

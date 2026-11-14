@@ -25,8 +25,7 @@ Bala *spawn_bala(Game *g, Vector2 pos, Vector2 vel, Vector2 tamanho, bool recort
     b->vel.x = vel.x;
     b->vel.y = vel.y;
 
-    // o slot e reaproveitado: sem zerar, a bala nova herdaria acel/espera
-    // da ultima que morou aqui. quem quiser outro valor muda pelo retorno.
+    // o espaco do vetor e reaproveitado, temq zerar pra prox bala
     b->acel = (Vector2){ 0, 0 };
     b->espera = 0;
 
@@ -38,8 +37,7 @@ Bala *spawn_bala(Game *g, Vector2 pos, Vector2 vel, Vector2 tamanho, bool recort
     return b;
 }
 
-// desenha uma bala: o sprite fica centralizado na hitbox (a imagem costuma ser
-// maior que a hitbox por causa das bordas transparentes). sem sprite, um quadrado.
+// sem sprite desenha quadrado
 static void desenha_bala(Bala *b) {
     if (b->textura != NULL) {
         float px = b->r.x + (b->r.width  - b->textura->width  * b->escala) / 2.0f;
@@ -61,9 +59,9 @@ void att_entidades(Game *g, float dt) {
         if (b->espera > 0) {
             b->espera -= dt;
         } else {
-            b->vel.x += b->acel.x*dt;   // primeiro a velocidade...
+            b->vel.x += b->acel.x*dt;   // velocidade
             b->vel.y += b->acel.y*dt;
-            b->r.x += b->vel.x*dt;      // ...depois a posicao
+            b->r.x += b->vel.x*dt;      // posicao
             b->r.y += b->vel.y*dt;
         }
 
@@ -71,7 +69,7 @@ void att_entidades(Game *g, float dt) {
         Rectangle hitbox = { g->jogador.x - 4, g->jogador.y - 4, 8, 8 };
         if (CheckCollisionRecs(hitbox, b->r)) {
             if (g->iframes <= 0) dano_player(g);
-            b->ativo = false;   // a gota some ao encostar na alma
+            b->ativo = false;   // bala some ao dar dano
         }
 
            // quando sair da tela, ativo = false;
@@ -96,8 +94,7 @@ void desenha_entidades(Game *g) {
         }
     }
 
-    // balas com recorte: so aparecem dentro da caixa (ex: chuva, que nasce acima
-    // das paredes).
+    // balas com recorte: so aparecem dentro da caixa
     BeginScissorMode((int)(g->caixa.x + BORDA),
                      (int)(g->caixa.y + BORDA),
                      (int)(g->caixa.width  - 2 * BORDA),
