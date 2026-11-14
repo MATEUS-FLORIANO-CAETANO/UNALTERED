@@ -1,5 +1,8 @@
 #include "game.h"
 
+// Clamp() 
+#include "raymath.h"
+
 // o que main.c gerencia:
 // 1. a unica definicao da struct que carrega os dados do jogo (OK)
 // 2. inicializa janela, desenha cada frame
@@ -61,17 +64,6 @@ int main(void)
     g.caixa.x = screenWidth / 2 - g.caixa.width / 2;
     g.caixa.y = screenHeight / 2 - g.caixa.height / 2 + 70;
 
-    // g.caixa e a aparencia (outer): a borda de 5px e desenhada pra dentro.
-    // inner e a caixa encolhida 5px em cada lado = area jogavel real,
-    // usada pra prender a alma e pra logica de colisao das balas.
-    // (a colisao vive em att_entidades; calcular inner la a partir de g->caixa)
-    // Rectangle inner = {
-    //     g.caixa.x + 5,
-    //     g.caixa.y + 5,
-    //     g.caixa.width  - 2*5,
-    //     g.caixa.height - 2*5
-    // };
-
     InitWindow(screenWidth * escala, screenHeight * escala, "UNALTERED");
 
     // Escalar resolucao; 
@@ -111,6 +103,20 @@ int main(void)
             // nao faz nada ainda, placeholder pra uma "defesa"
         }
 
+        const float borda = 5;
+        float meiaW = alma.width  / 2.0f;
+        float meiaH = alma.height / 2.0f;
+
+        // x e y da caixa nao contam borda. hitbox da alma fica no canto e nao no centro. /2 ajeta
+    
+        float xMin = g.caixa.x + borda + meiaW; 
+        float xMax = g.caixa.x + g.caixa.width  - borda - meiaW; // direita
+        float yMin = g.caixa.y + borda + meiaH;
+        float yMax = g.caixa.y + g.caixa.height - borda - meiaH;
+
+        g.jogador.x = Clamp(g.jogador.x, xMin, xMax);
+        g.jogador.y = Clamp(g.jogador.y, yMin, yMax);
+
         att_entidades(&g, dt);
 
     /* parry, nao implementado
@@ -131,14 +137,17 @@ int main(void)
         //----------------------------------------------------------------------------------
         // desenhar
 
-        // 1. desenha o jogo na resolucao virtual (640x480), dentro do alvo.
-        //    toda a logica usa essas coordenadas, entao nada aqui muda.
+
+        // logica de upscaling com auxilio de IA. eu nao soube fazer - Luan
+
+        // 1. desenha o jogo na resolucao virtual (640x480), dentro do alvo
+        //    toda a logica usa essas coordenadas, entao nada aqui muda
         BeginTextureMode(alvo);
 
             ClearBackground(BLACK);
             DrawRectangleLinesEx(g.caixa, 5, WHITE);
-            // DrawTexture desenha a partir do canto superior esquerdo;
-            // desloca metade do tamanho pra centralizar a alma na posicao do jogador.
+            // DrawTexture desenha a partir do canto superior esquerdo
+            // desloca metade do tamanho pra centralizar a alma na posicao do jogador
             DrawTexture(alma, g.jogador.x - alma.width / 2.0f, g.jogador.y - alma.height / 2.0f, WHITE);
 
             desenha_entidades(&g);
@@ -146,7 +155,7 @@ int main(void)
         EndTextureMode();
 
         
-        // 2. estica o alvo pra janela inteira, mantendo a proporcao.
+        // 2. estica o alvo pra janela inteira, mantendo a proporcao
         BeginDrawing();
 
             ClearBackground(BLACK);

@@ -38,7 +38,7 @@ static void padrao_chuva(Game *g, float t, float intervalo) {
 }
 
 /*
-static void padrao_X(Game *g, float t, float intervalo) {
+static void padrao_circulo(Game *g, float t, float intervalo) {
     // ...
 }
 */

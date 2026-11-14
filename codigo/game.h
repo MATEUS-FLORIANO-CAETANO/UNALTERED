@@ -8,7 +8,7 @@
 // (compilador copia e cola os conteudos de game.h nos arquivos)
   
 typedef enum { ESTADO_JOGANDO, ESTADO_MORTE, ESTADO_VITORIA } estadoGame;
-typedef struct { Rectangle r; Vector2 vel; bool ativo; } Bala;
+typedef struct { Rectangle r; Vector2 vel; bool ativo; /*Texture2D textura;*/ } Bala;
 
 // prototipo: todas as informacoes que cada frame precisa saber. 
 // declarado aqui, inicializado em main.c, passa referencia por todas funcoes
@@ -16,7 +16,8 @@ typedef struct {
     estadoGame estado; 
     Rectangle caixa; 
     Vector2 jogador; 
-    int hp, iframes;
+    int hp; 
+    float iframes;
     
     // instancia 256 balas, cada uma com estado ativo/inativo
     // assim, nao precisa alocar dinamicamente

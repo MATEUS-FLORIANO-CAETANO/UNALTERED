@@ -5,8 +5,8 @@ static void dano_player(Game *g) {
     g->iframes = 0.3f;
 }
 
-// typedef struct { Rectangle r; Vector2 vel; bool ativo; } Bala;
-void spawn_bala(Game *g, Vector2 pos, Vector2 vel) {
+// TODO: TB DEVE RECEBER ENDERECO DE TEXTURA COMO PARAMETRO
+void spawn_bala(Game *g, Vector2 pos, Vector2 vel /*,Texture2D *textura*/) {
     int i;
     for (i = 0; i < MAX_BALAS; i++) {
         if (!g->balas[i].ativo) break;
@@ -21,6 +21,7 @@ void spawn_bala(Game *g, Vector2 pos, Vector2 vel) {
     g->balas[i].vel.y = vel.y;
 
     g->balas[i].ativo = true;
+    /*g->balas.textura = textura; */
 }
 
 void att_entidades(Game *g, float dt) {
