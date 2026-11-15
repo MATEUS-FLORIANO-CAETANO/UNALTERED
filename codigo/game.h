@@ -32,6 +32,9 @@ typedef struct {
     Vector2 acel;         // px/s², somada na vel todo frame
     float segue;          // segundos acompanhando a alma (mesma distancia), ANTES da espera
     float espera;         // segundos parada antes de comecar a se mover
+    float vida;           // segundos ate sumir sozinha, contando do spawn (0 = sem limite)
+    float persegue;       // rad/s que a vel gira em direcao a alma (0 = reta). mantem
+                          // o modulo da vel; precisa de vel != 0. ex: 2.0 = curva suave
     bool persiste;        // true = nao some ao acertar a alma (barreiras, ossos)
     bool recorta;         // true = so aparece dentro da caixa
     bool laser;           // true = linha de aviso roxa na direcao da acel enquanto

@@ -45,6 +45,12 @@ void att_entidades(Game *g, float dt) {
         if (!g->balas[i].ativo) continue;
         Bala *b = &g->balas[i];
 
+        // vida acabou: some (0 = nunca expira)
+        if (b->vida > 0) {
+            b->vida -= dt;
+            if (b->vida <= 0) { b->ativo = false; continue; }
+        }
+
         // seguindo: anda junto com a alma, sempre na mesma distancia dela
         if (b->segue > 0) {
             b->segue -= dt;
@@ -54,6 +60,16 @@ void att_entidades(Game *g, float dt) {
         } else if (b->espera > 0) {
             b->espera -= dt;
         } else {
+            // perseguidora: gira a vel no maximo persegue*dt rad em direcao a alma
+            if (b->persegue > 0) {
+                Vector2 meio = { b->r.x + b->r.width / 2, b->r.y + b->r.height / 2 };
+                Vector2 alvo = Vector2Subtract(g->jogador, meio);
+                float dif = atan2f(alvo.y, alvo.x) - atan2f(b->vel.y, b->vel.x);
+                dif = atan2f(sinf(dif), cosf(dif));   // menor caminho: [-PI, PI]
+                float max = b->persegue * dt;
+                b->vel = Vector2Rotate(b->vel, Clamp(dif, -max, max));
+            }
+
             b->vel.x += b->acel.x*dt;   // velocidade
             b->vel.y += b->acel.y*dt;
             b->r.x += b->vel.x*dt;      // posicao

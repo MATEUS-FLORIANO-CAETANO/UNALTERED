@@ -1,3 +1,27 @@
+/*
+ * IDEIAS DE ATAQUE, faça o que achar mais legal
+ *
+ * variacoes do que ja tem, ex.:
+ * - chuva lateral
+ * - o mesmo das facas, mas com segue diferente (1.0, 1.3, 1.6...), com varias facas ao msm tempo
+ * - facas em cruz (uma horiz. e outra vert.), congelam e fecham ao msm tempo
+ *
+ *eu implementei um campo pra vida (duracao que a bala fica na tela)
+ *e um campo pra persegue (que faz a bala girar na direcao do player e acompanhar)
+ *nao usei nenhum desses 2 em ataques ainda, mas com eles da pra fazer:
+ *
+ *- uma "gaiola", circulo grandao com centro em canto aleatorio da arena que fecha até quase largura do player, dps some
+ *- enxame, acompanha pouco mas sao muitas
+ *- bala seguindo atras da alma bem rapido, nao pode ficar parado
+ *
+ *
+ *em geral:
+ *- golpe que cai do ceu com pouca vel pra baixo e muita vel lateral, quando chega na borda da caixa inverte, como se tivesse quicando
+ *- chuva que cai tudo de uma vez, mas marca com laser antes pra encontrar a "folga"
+ *- balas que deixam rastro
+ *- n balas no centro, velocidade pra fora "explosao"
+ *
+*/
 // padrões de ataque e sequência de ondas
 // decide quando e onde as coisas nascem (via spawn_bala),
 // movimento e colisão fica em entidades.c
@@ -258,7 +282,7 @@ static void padrao_faca(Game *g, Onda o, int n) {
     const float RAIO  = 120.0f;   // distancia do centro da caixa onde a faca nasce
     const float SEGUE = 0.6f;     // s acompanhando a alma (mesma distancia, mesma mira)
     const float AVISO = 0.0f;     // s congelada antes de disparar
-    const float ACEL  = 15000.0f;  // px/s²
+    const float ACEL  = 55000.0f;  // px/s²
     // recua RECUO²/(2*ACEL) px (~12px) por RECUO/ACEL s (~0.1s)
     const float RECUO = 250.0f;   // px/s
     const int   M     = 10;       // quadradinhos na lamina
@@ -313,7 +337,7 @@ static Onda ondas[] = {
 //    { PAD_CIRCULO,  8.0f,    2.0f,      1.0f },   // circulo do jevil
 //    { PAD_BARREIRA, 8.0f,    0.4f,      1.0f },   // barreiras do sans
 //    { PAD_ESPINGARDA, 8.0f,  0.8f,      1.0f },   // espingarda
-    { PAD_FACA,     8.0f,    0.5f,      1.0f },   // facas com aviso
+    { PAD_FACA,     8.0f,    0.6f,      1.0f },   // facas com aviso
 };
 
 // quantidade de ondas = tamanho total / tamanho de cada
