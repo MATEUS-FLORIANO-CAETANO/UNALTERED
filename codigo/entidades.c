@@ -1,41 +1,29 @@
 #include "game.h"
-
+#include "raymath.h"   // Vector2Normalize, Vector2DotProduct...
 
 static void dano_player(Game *g) {
+    PlaySound(dano);
     g->hp -= 10;
     g->iframes = 1.0f;
 }
 
-Bala *spawn_bala(Game *g, Vector2 pos, Vector2 vel, Vector2 tamanho, bool recorta, Texture2D *textura, float escala) {
-    int i;
-    for (i = 0; i < MAX_BALAS; i++) {
-        if (!g->balas[i].ativo) break;
+void spawn_bala(Game *g, Bala nova) {
+    // tam 0 nao faz nada
+    if (nova.r.width <= 0 || nova.r.height <= 0) return;
+
+    if (nova.escala == 0) nova.escala = 1;
+    nova.ativo = true;
+    // guarda a distancia ate a alma 
+    nova.desloc = (Vector2){ nova.r.x - g->jogador.x, nova.r.y - g->jogador.y };
+
+    for (int i = 0; i < MAX_BALAS; i++) {
+        if (!g->balas[i].ativo) {
+            // reescreve a bala inteira
+            g->balas[i] = nova;
+            return;
+        }
     }
-    if (i >= MAX_BALAS) return NULL;
-
-    Bala *b = &g->balas[i];
-
-    // hitbox independente do sprite: o ataque passa o tamanho, pois a imagem pode
-    // ter bordas transparentes (ex: gota ~10x13 dentro de um png 32x32)
-    b->r.width  = tamanho.x;
-    b->r.height = tamanho.y;
-    b->r.x = pos.x;
-    b->r.y = pos.y;
-
-    b->vel.x = vel.x;
-    b->vel.y = vel.y;
-
-    // o espaco do vetor e reaproveitado, temq zerar pra prox bala
-    b->acel = (Vector2){ 0, 0 };
-    b->espera = 0;
-    b->persiste = false;
-
-    b->ativo = true;
-    // o ataque decide:
-    b->recorta = recorta;   // e a bala e recortada pela caixa
-    b->textura = textura;   // a aparencia da bala
-    b->escala = escala;     // o tamanho do desenho
-    return b;
+    // array cheio bala nao nasce
 }
 
 // sem sprite desenha quadrado
@@ -56,10 +44,31 @@ void att_entidades(Game *g, float dt) {
         if (!g->balas[i].ativo) continue;
         Bala *b = &g->balas[i];
 
-        // ainda esperando: fica parada (mas continua colidindo, abaixo)
-        if (b->espera > 0) {
+        // vida acabou, some (0 = nao expira)
+        if (b->vida > 0) {
+            b->vida -= dt;
+            if (b->vida <= 0) { b->ativo = false; continue; }
+        }
+
+        // seguindo: sempre na mesma distancia da alma
+        if (b->segue > 0) {
+            b->segue -= dt;
+            b->r.x = g->jogador.x + b->desloc.x;
+            b->r.y = g->jogador.y + b->desloc.y;
+        // esperando: nao faz nada
+        } else if (b->espera > 0) {
             b->espera -= dt;
         } else {
+            // perseguidora: gira a vel no maximo persegue*dt rad em direcao a alma
+            if (b->persegue > 0) {
+                Vector2 meio = { b->r.x + b->r.width / 2, b->r.y + b->r.height / 2 };
+                Vector2 alvo = Vector2Subtract(g->jogador, meio);
+                float dif = atan2f(alvo.y, alvo.x) - atan2f(b->vel.y, b->vel.x);
+                dif = atan2f(sinf(dif), cosf(dif));   // menor caminho: [-PI, PI]
+                float max = b->persegue * dt;
+                b->vel = Vector2Rotate(b->vel, Clamp(dif, -max, max));
+            }
+
             b->vel.x += b->acel.x*dt;   // velocidade
             b->vel.y += b->acel.y*dt;
             b->r.x += b->vel.x*dt;      // posicao
@@ -71,13 +80,13 @@ void att_entidades(Game *g, float dt) {
                              HITBOX_ALMA, HITBOX_ALMA };
         if (CheckCollisionRecs(hitbox, b->r)) {
             if (g->iframes <= 0) dano_player(g);
-            // bala some ao dar dano; barreira continua (os iframes impedem
-            // que ela tire vida todo frame enquanto atravessa a alma)
             if (!b->persiste) b->ativo = false;
         }
 
-           // quando sair da tela, ativo = false;
-    if (b->r.x < -20 || b->r.x > VIRTUAL_W + 20 || b->r.y < -20 || b->r.y > VIRTUAL_H + 20) b->ativo = false;
+        // quando sair da tela, ativo = false
+        const float MARGEM = 64.0f;
+        if (b->r.x < -MARGEM || b->r.x > VIRTUAL_W + MARGEM ||
+            b->r.y < -MARGEM || b->r.y > VIRTUAL_H + MARGEM) b->ativo = false;
         }
 
 
@@ -88,9 +97,21 @@ void att_entidades(Game *g, float dt) {
 
 void desenha_entidades(Game *g) {
     float dt = GetFrameTime();
-    // decrementa imunidade
+    // decrementa imunidade dps de tomar dano
     if (g->iframes > 0) g->iframes -= dt;
-    
+
+    // linhas de aviso saem do centro da bala na direcao da acel e
+    // atravessam a tela. so enquanto espera ou recua (vel contra a acel).
+    for (int i = 0; i < MAX_BALAS; i++) {
+        Bala *b = &g->balas[i];
+        if (!b->ativo || !b->laser) continue;
+        if (b->espera <= 0 && Vector2DotProduct(b->vel, b->acel) >= 0) continue;
+
+        Vector2 ini = { b->r.x + b->r.width / 2, b->r.y + b->r.height / 2 };
+        Vector2 fim = Vector2Add(ini, Vector2Scale(Vector2Normalize(b->acel), 1000));
+        DrawLineEx(ini, fim, 1.5f, PURPLE);
+    }
+
     // balas sem recorte: aparecem em qualquer lugar da tela
     for (int i = 0; i < MAX_BALAS; i++) {
         if (g->balas[i].ativo && !g->balas[i].recorta) {
