@@ -9,14 +9,12 @@
 #define VIRTUAL_W 640
 #define VIRTUAL_H 480
 
-// alma: sprite 16x16 (assets/alma.png), hitbox 8x8 no centro.
-// ficam aqui pra os ataques poderem calcular frestas alcancaveis.
 #define TAM_ALMA     16
 #define HITBOX_ALMA  8
 #define VEL_JOGADOR  120   // px/s
 
-
 extern Sound dano;
+
 // guarda declaracoes das funcoes pro compilador. todo arquivo inclui game.h 
 // (compilador copia e cola os conteudos de game.h nos arquivos)
   
@@ -28,22 +26,26 @@ typedef enum { ESTADO_JOGANDO, ESTADO_MORTE, ESTADO_VITORIA } estadoGame;
 // campos que o ataque preenche. o que nao for preenchido vale 0 / false / NULL.
 typedef struct {
     Rectangle r;          // hitbox: canto superior esquerdo + largura/altura
-    Vector2 vel;          // px/s
-    Vector2 acel;         // px/s², somada na vel todo frame
-    float segue;          // segundos acompanhando a alma (mesma distancia), ANTES da espera
-    float espera;         // segundos parada antes de comecar a se mover
-    float vida;           // segundos ate sumir sozinha, contando do spawn (0 = sem limite)
-    float persegue;       // rad/s que a vel gira em direcao a alma (0 = reta). mantem
+    Vector2 vel;          // 
+    Vector2 acel;         //  somada na vel todo frame
+    float segue;          // segs. acompanhando a alma, antes da espera
+    float espera;         // segs. parada
+    float vida;           // segs. ate sumir (0 = nao expira)
+
+    float persegue;       // CLAUDE: rad/s que a vel gira em direcao a alma (0 = reta). mantem
                           // o modulo da vel; precisa de vel != 0. ex: 2.0 = curva suave
-    bool persiste;        // true = nao some ao acertar a alma (barreiras, ossos)
+
+    bool persiste;        // true = nao some ao acertar
     bool recorta;         // true = so aparece dentro da caixa
     bool laser;           // true = linha de aviso roxa na direcao da acel enquanto
                           // espera ou recua (some quando comeca a ir pra frente)
     Texture2D *textura;   // NULL = quadrado branco
-    float escala;         // tamanho do desenho do sprite (0 = 1)
-    bool ativo;           // controlado por spawn_bala/att_entidades, o ataque nao mexe
-    Vector2 desloc;       // idem: distancia ate a alma guardada no spawn (usada por 'segue')
+    float escala;         // multiplica tam do desenho
+
+    bool ativo;           
+    Vector2 desloc;       // distancia ate a alma guardada no spawn (usada por 'segue')
 } Bala;
+
 
 // prototipo: todas as informacoes que cada frame precisa saber. 
 // declarado aqui, inicializado em main.c, passa referencia por todas funcoes
@@ -63,15 +65,12 @@ typedef struct {
     int disparo;       // quantas vezes o padrao da onda atual ja disparou
 } Game;
 
-// declaracoes: existem em entidades.c
-// copia 'nova' pra um slot livre. uso:
-//   spawn_bala(g, (Bala){ .r = {x, y, w, h}, .vel = {0, 120}, .recorta = true });
-// bala sem tamanho (w ou h <= 0) e ignorada; array cheio tambem.
+// declaracoes: usei em entidades.c
 void spawn_bala(Game *g, Bala nova);
 void att_entidades(Game *g, float dt);
 void desenha_entidades(Game *g);
 
-// declaracao: existe em ataques.c
+// declaracao: usei em ataques.c
 bool att_ondas(Game *g, float dt);
 
 #endif

@@ -1,3 +1,5 @@
+// entupi de comentario pra poder entender o que cada coisa faz
+
 /*
  * IDEIAS DE ATAQUE, faça o que achar mais legal
  *
@@ -143,19 +145,18 @@ static void padrao_chuva(Game *g, Onda o, int n) {
 
 // ---------------------------------------------------------------------------------
 
-// circulo (jevil): a cada disparo nasce um anel de N balas em volta do centro da
-// caixa. a bala k espera k*ATRASO segundos e entao acelera em linha reta pro centro.
+// circulo (jevil): a cada disparo nasce um anel de n balas em volta do centro da
+// caixa. a bala k espera k*ATRASO segundos e acelera pro centro
 static void padrao_circulo(Game *g, Onda o, int n) {
 
     // static Texture2D jevil = { 0 };
     // if (jevil.id == 0) jevil = LoadTexture("assets/jevil.png");
 
     const int   N      = 8;
-    const float RAIO   = 110.0f;   // acima de ~120 a bala de baixo nasce fora da tela
-    const float ACEL   = 200.0f;   // px/s²
-    const float ATRASO = 0.10f;    // s entre uma bala e a vizinha (volta = N*ATRASO)
-    // recuo (telegrafa o ataque): a bala sai pra FORA com essa vel e a acel pro centro
-    // freia ela ate voltar. recua RECUO²/(2*ACEL) px (~9px) por RECUO/ACEL s (~0.3s).
+    const float RAIO   = 110.0f;   
+    const float ACEL   = 200.0f;   // px/s^2
+    const float ATRASO = 0.10f;    // segs. entre uma bala e a vizinha (volta = N*ATRASO)
+    // recuo (telegrafa o ataque): a bala sai pra fora com velocidade do recuo e a acel faz voltar pro centro
     const float RECUO  = 60.0f;    // px/s
     const float TAM    = 8 * o.escala;
 
@@ -181,16 +182,15 @@ static void padrao_circulo(Game *g, Onda o, int n) {
 
 // ---------------------------------------------------------------------------------
 
-// barreira (sans / "flappy bird"): a cada disparo, duas balas finas e altas no mesmo
-// x cobrem a altura da caixa menos uma fresta, e atravessam a caixa de lado.
+// duas balas varrendo a tela, com uma fresta no meio
 // a fresta de cada par fica perto da anterior, pra sempre dar tempo de alcancar.
 static void padrao_barreira(Game *g, Onda o, int n) {
     // static Texture2D barreira = { 0 };
     // if (barreira.id == 0) barreira = LoadTexture("assets/barreira.png");
 
     const float VEL    = 140.0f;          // px/s pro lado
-    const int   DIR    = 1;               // +1 esquerda->direita, -1 direita->esquerda
-    const float LARG   = 12 * o.escala;   // largura da barreira
+    const int   DIR    = 1;               // +1 direita, -1 esquerda
+    const float LARG   = 12 * o.escala;   
     const float FRESTA = 2.0f * TAM_ALMA; // altura da fresta
 
     Rectangle in = interior(g);
@@ -199,7 +199,7 @@ static void padrao_barreira(Game *g, Onda o, int n) {
 
     // topo da fresta do par anterior (static: guarda entre disparos)
     static float frestaY;
-    if (n == 0) frestaY = centro(in).y - FRESTA / 2;   // 1o par: fresta no meio
+    if (n == 0) frestaY = centro(in).y - FRESTA / 2;   // 1 par: fresta no meio
 
     // a fresta anda no maximo o que a alma anda em um intervalo (com 30% de folga)
     int passo = (int)(VEL_JOGADOR * o.intervalo * 0.7f);
@@ -212,7 +212,6 @@ static void padrao_barreira(Game *g, Onda o, int n) {
     passoY = Clamp(passoY, -passo, passo);   // nunca pula mais do que a alma alcanca
     frestaY = Clamp(frestaY + passoY, topo, fundo - FRESTA);
 
-    // nasce logo fora da parede de entrada (.recorta esconde ate entrar)
     float x = (DIR > 0) ? in.x - LARG : in.x + in.width;
     Vector2 vel = { DIR * VEL, 0 };
 
@@ -271,11 +270,10 @@ static void padrao_espingarda(Game *g, Onda o, int n) {
 
 // ---------------------------------------------------------------------------------
 
-// faca ("hitscan"): nasce num ponto aleatorio em volta da caixa apontada pra alma,
+// faca nasce num ponto aleatorio em volta da caixa apontada pra alma,
 // mostra a linha de aviso roxa, recua um pouco (como no circulo) e dispara muito rapido.
 // a hitbox e uma fileira de M quadradinhos com o mesmo movimento, formando a lamina
-// (Rectangle nao gira). de quebra, como a fileira anda no sentido do proprio
-// comprimento, ela nao "pula" a alma entre um frame e outro mesmo em alta velocidade.
+// (Rectangle nao gira).
 static void padrao_faca(Game *g, Onda o, int n) {
     (void)n;
 
@@ -352,22 +350,21 @@ static bool tem_balas(Game *g) {
 }
 
 // chamado 1x por frame no main.c. retorna true quando acabarem as ondas.
-// e aqui (e so aqui) que se decide QUANDO um padrao dispara.
+// aqui que decide quando um padrao dispara.
 bool att_ondas(Game *g, float dt) {
     if (g->onda >= NUM_ONDAS) return true;
     g->tempoOnda += dt;
 
     Onda atual = ondas[g->onda];
 
-    // disparo n acontece no instante n * intervalo (0, intervalo, 2*intervalo...)
+    // disparo n acontece no instante n * intervalo
     // depois da duracao para de disparar
     if (g->tempoOnda <= atual.duracao &&
         g->tempoOnda >= g->disparo * atual.intervalo) {
         exec_padrao(g, atual, g->disparo);
         g->disparo++;
     }
-
-    // acabou o tempo da onda E todas as balas sumiram: passa pra proxima
+    
     if (g->tempoOnda > atual.duracao && !tem_balas(g)) {
         g->onda++;
         g->tempoOnda = 0;

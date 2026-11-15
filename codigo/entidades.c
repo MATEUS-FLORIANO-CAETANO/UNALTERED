@@ -97,10 +97,10 @@ void att_entidades(Game *g, float dt) {
 
 void desenha_entidades(Game *g) {
     float dt = GetFrameTime();
-    // decrementa imunidade
+    // decrementa imunidade dps de tomar dano
     if (g->iframes > 0) g->iframes -= dt;
 
-    // linhas de aviso (inofensivas): saem do centro da bala na direcao da acel e
+    // linhas de aviso saem do centro da bala na direcao da acel e
     // atravessam a tela. so enquanto espera ou recua (vel contra a acel).
     for (int i = 0; i < MAX_BALAS; i++) {
         Bala *b = &g->balas[i];
