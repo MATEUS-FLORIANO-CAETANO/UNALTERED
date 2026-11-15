@@ -1,0 +1,8 @@
+# Todos os usos de IA estão marcados com // CLAUDE no codigo
+
+## Casos notaveis: 
+1. implementação da resolução virtual x real com 2x escala (para aumentar tamanho da tela sem precisar mexer nos valores internos)
+2. criacao de funções ajudantes e trigonometria
+3. bug fix de texturas e sons que nao carregavam devido ao caminho dos arquivos ser relativo ao local do executavel
+4. passeio aleatorio no golpe de barreiras
+ 
