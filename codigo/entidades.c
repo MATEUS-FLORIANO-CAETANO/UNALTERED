@@ -8,23 +8,22 @@ static void dano_player(Game *g) {
 }
 
 void spawn_bala(Game *g, Bala nova) {
-    // sem tamanho = nada pra criar (ex: barreira com a fresta encostada no topo)
+    // tam 0 nao faz nada
     if (nova.r.width <= 0 || nova.r.height <= 0) return;
 
-    // escala nao preenchida (0) desenharia o sprite com tamanho zero
     if (nova.escala == 0) nova.escala = 1;
     nova.ativo = true;
-    // guarda a distancia ate a alma pra manter enquanto 'segue'
+    // guarda a distancia ate a alma 
     nova.desloc = (Vector2){ nova.r.x - g->jogador.x, nova.r.y - g->jogador.y };
 
     for (int i = 0; i < MAX_BALAS; i++) {
         if (!g->balas[i].ativo) {
-            // copia a struct inteira: nao sobra nada da bala que morava aqui
+            // reescreve a bala inteira
             g->balas[i] = nova;
             return;
         }
     }
-    // array cheio: a bala nao nasce
+    // array cheio bala nao nasce
 }
 
 // sem sprite desenha quadrado
@@ -45,18 +44,18 @@ void att_entidades(Game *g, float dt) {
         if (!g->balas[i].ativo) continue;
         Bala *b = &g->balas[i];
 
-        // vida acabou: some (0 = nunca expira)
+        // vida acabou, some (0 = nao expira)
         if (b->vida > 0) {
             b->vida -= dt;
             if (b->vida <= 0) { b->ativo = false; continue; }
         }
 
-        // seguindo: anda junto com a alma, sempre na mesma distancia dela
+        // seguindo: sempre na mesma distancia da alma
         if (b->segue > 0) {
             b->segue -= dt;
             b->r.x = g->jogador.x + b->desloc.x;
             b->r.y = g->jogador.y + b->desloc.y;
-        // ainda esperando: fica parada (mas continua colidindo, abaixo)
+        // esperando: nao faz nada
         } else if (b->espera > 0) {
             b->espera -= dt;
         } else {
@@ -81,13 +80,10 @@ void att_entidades(Game *g, float dt) {
                              HITBOX_ALMA, HITBOX_ALMA };
         if (CheckCollisionRecs(hitbox, b->r)) {
             if (g->iframes <= 0) dano_player(g);
-            // bala some ao dar dano; barreira continua (os iframes impedem
-            // que ela tire vida todo frame enquanto atravessa a alma)
             if (!b->persiste) b->ativo = false;
         }
 
-        // quando sair da tela, ativo = false. margem folgada pra bala que nasce
-        // perto da borda (ou recua, como no circulo) nao sumir antes de voltar
+        // quando sair da tela, ativo = false
         const float MARGEM = 64.0f;
         if (b->r.x < -MARGEM || b->r.x > VIRTUAL_W + MARGEM ||
             b->r.y < -MARGEM || b->r.y > VIRTUAL_H + MARGEM) b->ativo = false;
