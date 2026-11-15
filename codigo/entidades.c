@@ -1,4 +1,5 @@
 #include "game.h"
+#include "raymath.h"   // Vector2Normalize, Vector2DotProduct...
 
 static void dano_player(Game *g) {
     PlaySound(dano);
@@ -13,6 +14,8 @@ void spawn_bala(Game *g, Bala nova) {
     // escala nao preenchida (0) desenharia o sprite com tamanho zero
     if (nova.escala == 0) nova.escala = 1;
     nova.ativo = true;
+    // guarda a distancia ate a alma pra manter enquanto 'segue'
+    nova.desloc = (Vector2){ nova.r.x - g->jogador.x, nova.r.y - g->jogador.y };
 
     for (int i = 0; i < MAX_BALAS; i++) {
         if (!g->balas[i].ativo) {
@@ -42,8 +45,13 @@ void att_entidades(Game *g, float dt) {
         if (!g->balas[i].ativo) continue;
         Bala *b = &g->balas[i];
 
+        // seguindo: anda junto com a alma, sempre na mesma distancia dela
+        if (b->segue > 0) {
+            b->segue -= dt;
+            b->r.x = g->jogador.x + b->desloc.x;
+            b->r.y = g->jogador.y + b->desloc.y;
         // ainda esperando: fica parada (mas continua colidindo, abaixo)
-        if (b->espera > 0) {
+        } else if (b->espera > 0) {
             b->espera -= dt;
         } else {
             b->vel.x += b->acel.x*dt;   // velocidade
@@ -62,8 +70,11 @@ void att_entidades(Game *g, float dt) {
             if (!b->persiste) b->ativo = false;
         }
 
-           // quando sair da tela, ativo = false;
-    if (b->r.x < -20 || b->r.x > VIRTUAL_W + 20 || b->r.y < -20 || b->r.y > VIRTUAL_H + 20) b->ativo = false;
+        // quando sair da tela, ativo = false. margem folgada pra bala que nasce
+        // perto da borda (ou recua, como no circulo) nao sumir antes de voltar
+        const float MARGEM = 64.0f;
+        if (b->r.x < -MARGEM || b->r.x > VIRTUAL_W + MARGEM ||
+            b->r.y < -MARGEM || b->r.y > VIRTUAL_H + MARGEM) b->ativo = false;
         }
 
 
@@ -76,7 +87,19 @@ void desenha_entidades(Game *g) {
     float dt = GetFrameTime();
     // decrementa imunidade
     if (g->iframes > 0) g->iframes -= dt;
-    
+
+    // linhas de aviso (inofensivas): saem do centro da bala na direcao da acel e
+    // atravessam a tela. so enquanto espera ou recua (vel contra a acel).
+    for (int i = 0; i < MAX_BALAS; i++) {
+        Bala *b = &g->balas[i];
+        if (!b->ativo || !b->laser) continue;
+        if (b->espera <= 0 && Vector2DotProduct(b->vel, b->acel) >= 0) continue;
+
+        Vector2 ini = { b->r.x + b->r.width / 2, b->r.y + b->r.height / 2 };
+        Vector2 fim = Vector2Add(ini, Vector2Scale(Vector2Normalize(b->acel), 1000));
+        DrawLineEx(ini, fim, 1.5f, PURPLE);
+    }
+
     // balas sem recorte: aparecem em qualquer lugar da tela
     for (int i = 0; i < MAX_BALAS; i++) {
         if (g->balas[i].ativo && !g->balas[i].recorta) {

@@ -37,6 +37,8 @@ typedef enum {
     PAD_CHUVA,
     PAD_CIRCULO,
     PAD_BARREIRA,
+    PAD_ESPINGARDA,
+    PAD_FACA,
     /* ... */
 } TipoAtaque;
 
@@ -128,6 +130,9 @@ static void padrao_circulo(Game *g, Onda o, int n) {
     const float RAIO   = 110.0f;   // acima de ~120 a bala de baixo nasce fora da tela
     const float ACEL   = 200.0f;   // px/s²
     const float ATRASO = 0.10f;    // s entre uma bala e a vizinha (volta = N*ATRASO)
+    // recuo (telegrafa o ataque): a bala sai pra FORA com essa vel e a acel pro centro
+    // freia ela ate voltar. recua RECUO²/(2*ACEL) px (~9px) por RECUO/ACEL s (~0.3s).
+    const float RECUO  = 60.0f;    // px/s
     const float TAM    = 8 * o.escala;
 
     Vector2 c = centro(g->caixa);
@@ -141,6 +146,7 @@ static void padrao_circulo(Game *g, Onda o, int n) {
 
         spawn_bala(g, (Bala){
             .r      = ret_centrado(pos, TAM, TAM),
+            .vel    = rumo(c, pos, RECUO),        // comeca indo pra fora (recuo)
             .acel   = rumo(pos, c, ACEL),         // acelera em direcao ao centro
             .espera = ordem * ATRASO,
             .escala = o.escala,
@@ -173,7 +179,14 @@ static void padrao_barreira(Game *g, Onda o, int n) {
 
     // a fresta anda no maximo o que a alma anda em um intervalo (com 30% de folga)
     int passo = (int)(VEL_JOGADOR * o.intervalo * 0.7f);
-    frestaY = Clamp(frestaY + GetRandomValue(-passo, passo), topo, fundo - FRESTA);
+
+    // puxa a fresta de volta pro meio: quanto mais longe, mais forte o puxao
+    // (0 = passeio aleatorio puro, 1 = volta pro meio de uma vez)
+    const float PUXAO = 0.35f;
+    float meio  = centro(in).y - FRESTA / 2;
+    float passoY = GetRandomValue(-passo, passo) + (meio - frestaY) * PUXAO;
+    passoY = Clamp(passoY, -passo, passo);   // nunca pula mais do que a alma alcanca
+    frestaY = Clamp(frestaY + passoY, topo, fundo - FRESTA);
 
     // nasce logo fora da parede de entrada (.recorta esconde ate entrar)
     float x = (DIR > 0) ? in.x - LARG : in.x + in.width;
@@ -195,6 +208,83 @@ static void padrao_barreira(Game *g, Onda o, int n) {
     });
 }
 
+// ---------------------------------------------------------------------------------
+
+// espingarda: a cada disparo, um leque de K balas mirado na alma, saindo de fora da
+// caixa. alterna esquerda/direita; a altura e aleatoria em ate 0.75 caixa acima ou
+// abaixo do centro (cobre 1.5 caixa). sem recorte: da pra ver a bala chegando.
+static void padrao_espingarda(Game *g, Onda o, int n) {
+    const int   K      = 6;                 // balas por disparo
+    const float ABERTO = 60 * DEG2RAD;      // abertura total do leque
+    const float VEL    = 140.0f;            // px/s
+    const float DIST   = 50.0f;             // distancia da boca ate a parede da caixa
+    const float TAM    = 6 * o.escala;
+
+    Vector2 c = centro(g->caixa);
+    int esq   = (n % 2 == 0);               // par = esquerda, impar = direita
+    float x   = esq ? g->caixa.x - DIST : g->caixa.x + g->caixa.width + DIST;
+    int faixa = (int)(0.75f * g->caixa.height);
+    float y   = c.y + GetRandomValue(-faixa, faixa);
+    Vector2 boca = { x, y };
+
+    Vector2 mira = rumo(boca, g->jogador, VEL);   // mira na alma
+
+    // com K par desloca o leque meio passo pra um lado (sorteado),
+    // pra sempre ter uma bala exatamente na mira.
+    float passo = ABERTO / (K - 1);
+    float desvio = (K % 2 == 0) ? (GetRandomValue(0, 1) ? 0.5f : -0.5f) * passo : 0;
+
+    for (int k = 0; k < K; k++) {
+        float ang = -ABERTO / 2 + k * passo + desvio;
+        spawn_bala(g, (Bala){
+            .r      = ret_centrado(boca, TAM, TAM),
+            .vel    = Vector2Rotate(mira, ang),
+            .escala = o.escala,
+        });
+    }
+}
+
+
+// ---------------------------------------------------------------------------------
+
+// faca ("hitscan"): nasce num ponto aleatorio em volta da caixa apontada pra alma,
+// mostra a linha de aviso roxa, recua um pouco (como no circulo) e dispara muito rapido.
+// a hitbox e uma fileira de M quadradinhos com o mesmo movimento, formando a lamina
+// (Rectangle nao gira). de quebra, como a fileira anda no sentido do proprio
+// comprimento, ela nao "pula" a alma entre um frame e outro mesmo em alta velocidade.
+static void padrao_faca(Game *g, Onda o, int n) {
+    (void)n;
+
+    const float RAIO  = 120.0f;   // distancia do centro da caixa onde a faca nasce
+    const float SEGUE = 0.6f;     // s acompanhando a alma (mesma distancia, mesma mira)
+    const float AVISO = 0.0f;     // s congelada antes de disparar
+    const float ACEL  = 15000.0f;  // px/s²
+    // recua RECUO²/(2*ACEL) px (~12px) por RECUO/ACEL s (~0.1s)
+    const float RECUO = 250.0f;   // px/s
+    const int   M     = 10;       // quadradinhos na lamina
+    const float PASSO = 4 * o.escala;   // distancia entre eles (comprimento ~ M*PASSO)
+    const float TAM   = 5 * o.escala;   // lado de cada quadradinho
+
+    Vector2 c = centro(g->caixa);
+    float ang = GetRandomValue(0, 359) * DEG2RAD;
+    Vector2 ponta = no_circulo(c, RAIO, ang);
+    Vector2 dir = rumo(ponta, g->jogador, 1);   // unitario, mirando na alma
+
+    for (int k = 0; k < M; k++) {
+        // k = 0 e a ponta; o resto vai ficando pra tras ao longo da lamina
+        Vector2 pos = Vector2Subtract(ponta, Vector2Scale(dir, k * PASSO));
+        spawn_bala(g, (Bala){
+            .r        = ret_centrado(pos, TAM, TAM),
+            .vel      = Vector2Scale(dir, -RECUO),   // recua antes de ir
+            .acel     = Vector2Scale(dir, ACEL),
+            .segue    = SEGUE,
+            .espera   = AVISO,
+            .persiste = true,                        // a lamina nao se desmancha
+            .laser    = (k == 0),                    // so a ponta desenha a linha
+            .escala   = o.escala,
+        });
+    }
+}
 
 // ---------------------------------------------------------------------------------
 
@@ -204,6 +294,8 @@ static void exec_padrao(Game *g, Onda o, int n) {
         case PAD_CHUVA:    padrao_chuva(g, o, n);    break;
         case PAD_CIRCULO:  padrao_circulo(g, o, n);  break;
         case PAD_BARREIRA: padrao_barreira(g, o, n); break;
+        case PAD_ESPINGARDA: padrao_espingarda(g, o, n); break;
+        case PAD_FACA:     padrao_faca(g, o, n);     break;
         /* case PAD_X:     padrao_x(g, o, n);        break; */
         default:           break;
     }
@@ -215,16 +307,25 @@ static void exec_padrao(Game *g, Onda o, int n) {
  */
 
 static Onda ondas[] = {
-    //  tipo        duracao  intervalo  escala
-    { PAD_CHUVA,    8.0f,    0.25f,     1.0f },   // chuva leve
-   // { PAD_CHUVA,    8.0f,    0.40f,     2.0f },   // chuva pesada
-     { PAD_CIRCULO,  8.0f,    2.0f,      1.0f },   // circulo do jevil
-    { PAD_BARREIRA, 8.0f,    0.4f,      1.0f },   // barreiras do sans
+    // tipo        duracao  intervalo  escala
+//    { PAD_CHUVA,    8.0f,    0.25f,     1.0f },   // chuva leve
+//    { PAD_CHUVA,    8.0f,    0.40f,     2.0f },   // chuva pesada
+//    { PAD_CIRCULO,  8.0f,    2.0f,      1.0f },   // circulo do jevil
+//    { PAD_BARREIRA, 8.0f,    0.4f,      1.0f },   // barreiras do sans
+//    { PAD_ESPINGARDA, 8.0f,  0.8f,      1.0f },   // espingarda
+    { PAD_FACA,     8.0f,    0.5f,      1.0f },   // facas com aviso
 };
 
 // quantidade de ondas = tamanho total / tamanho de cada
 #define NUM_ONDAS ((int)(sizeof(ondas) / sizeof(ondas[0])))
 
+
+// alguma bala ainda ativa na tela?
+static bool tem_balas(Game *g) {
+    for (int i = 0; i < MAX_BALAS; i++)
+        if (g->balas[i].ativo) return true;
+    return false;
+}
 
 // chamado 1x por frame no main.c. retorna true quando acabarem as ondas.
 // e aqui (e so aqui) que se decide QUANDO um padrao dispara.
@@ -235,13 +336,15 @@ bool att_ondas(Game *g, float dt) {
     Onda atual = ondas[g->onda];
 
     // disparo n acontece no instante n * intervalo (0, intervalo, 2*intervalo...)
-    if (g->tempoOnda >= g->disparo * atual.intervalo) {
+    // depois da duracao para de disparar
+    if (g->tempoOnda <= atual.duracao &&
+        g->tempoOnda >= g->disparo * atual.intervalo) {
         exec_padrao(g, atual, g->disparo);
         g->disparo++;
     }
 
-    // acabou o tempo da onda: passa pra proxima
-    if (g->tempoOnda > atual.duracao) {
+    // acabou o tempo da onda E todas as balas sumiram: passa pra proxima
+    if (g->tempoOnda > atual.duracao && !tem_balas(g)) {
         g->onda++;
         g->tempoOnda = 0;
         g->disparo = 0;

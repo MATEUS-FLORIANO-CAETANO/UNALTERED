@@ -30,12 +30,16 @@ typedef struct {
     Rectangle r;          // hitbox: canto superior esquerdo + largura/altura
     Vector2 vel;          // px/s
     Vector2 acel;         // px/s², somada na vel todo frame
+    float segue;          // segundos acompanhando a alma (mesma distancia), ANTES da espera
     float espera;         // segundos parada antes de comecar a se mover
     bool persiste;        // true = nao some ao acertar a alma (barreiras, ossos)
     bool recorta;         // true = so aparece dentro da caixa
+    bool laser;           // true = linha de aviso roxa na direcao da acel enquanto
+                          // espera ou recua (some quando comeca a ir pra frente)
     Texture2D *textura;   // NULL = quadrado branco
     float escala;         // tamanho do desenho do sprite (0 = 1)
     bool ativo;           // controlado por spawn_bala/att_entidades, o ataque nao mexe
+    Vector2 desloc;       // idem: distancia ate a alma guardada no spawn (usada por 'segue')
 } Bala;
 
 // prototipo: todas as informacoes que cada frame precisa saber. 
