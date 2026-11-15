@@ -8,7 +8,8 @@
    passeio aleatorio do golpe de barreiras
    legibilidade em geral 
 (tudo revisado pela equipe)
-3. bug fix de texturas e sons que nao carregavam devido ao caminho dos arquivos ser relativo ao local do executavel
+3. criação da Makefile
+4. bug fix de texturas e sons que nao carregavam devido ao caminho dos arquivos ser relativo ao local do executavel
 
 
 a logica em geral, a estrutura do motor, e toda arte em musica foi feita por humanos
