@@ -4,9 +4,9 @@
 #include "raymath.h"
 
 // o que main.c gerencia:
-// 1. a unica definicao da struct que carrega os dados do jogo (OK)
+// 1. a unica definicao da struct que carrega os dados do jogo 
 // 2. inicializa janela, desenha cada frame
-// 2. Input do jogador OK
+// 2. Input do jogador 
 // 4. Controle de estados (morreu? venceu?)
 // 5. chama funcoes principais dos outros arquivos: atualiza_entidades, desenha_entidades, etc. 
 
