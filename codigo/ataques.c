@@ -1,4 +1,4 @@
-// entupi de comentario pra poder entender o que cada coisa faz
+// entupi de comentario pra vc poder entender o que cada coisa faz
 
 /*
  * IDEIAS DE ATAQUE, faça o que achar mais legal
@@ -35,7 +35,7 @@
 /*
  * COMO ESCREVER UM ATAQUE
  *
- * um padrao e uma funcao  static void padrao_x(Game *g, Onda o, int n)
+ * um padrao eh uma funcao  static void padrao_x(Game *g, Onda o, int n)
  * que o att_ondas chama a cada o.intervalo segundos. ela so cria balas:
  *
  *   g -> estado do jogo (caixa, jogador...)
@@ -43,7 +43,7 @@
  *   n -> numero do disparo nessa onda: 0 no primeiro, 1 no segundo...
  *        (n == 0 serve pra resetar variaveis 'static' no comeco da onda)
  *
- * pra criar uma bala, preenche so os campos que importam (o resto vale 0):
+ * pra criar uma bala, preenche so os campos que importam:
  *
  *   spawn_bala(g, (Bala){
  *       .r        = { x, y, largura, altura },   // ou ret_centrado(centro, w, h)
@@ -53,9 +53,10 @@
  *       .persiste = true,                        // nao some ao acertar
  *       .recorta  = true,                        // so aparece dentro da caixa
  *       .textura  = &sprite, .escala = o.escala,
+ *       .etc...
  *   });
  *
- * depois: nome no enum, case no switch, linha na tabela ondas[].
+ * dps coloca nome no enum, case no switch, linha na tabela ondas[].
  */
 
 // um nome para cada padrão
@@ -79,7 +80,7 @@ typedef struct {
 
 
 // ---------------------------------------------------------------------------------
-// AJUDANTES: contas de geometria que todo padrao precisa
+//CLAUDE: AJUDANTES: contas de geometria que todo padrao precisa
 
 // area jogavel: a caixa sem a borda
 static Rectangle interior(Game *g) {
@@ -117,12 +118,11 @@ static Vector2 rumo(Vector2 de, Vector2 para, float modulo) {
 // chuva: balas nascem acima da caixa em x aleatorio e caem reto pra baixo
 static void padrao_chuva(Game *g, Onda o, int n) {
     
-    (void)n;   // a chuva nao depende de qual disparo esta
+    (void)n;   
     static Texture2D lagrima = { 0 };   // static: carrega a textura uma vez so
     if (lagrima.id == 0) lagrima = LoadTexture("assets/lagrima.png");
 
-    // tamanho aleatorio: +10% a +100%. um sorteio so, usado na hitbox E no sprite,
-    // pra o desenho crescer junto (o sprite tem escala uniforme, nao da pra esticar w e h separados)
+    // tamanho aleatorio: +10% a +100%.
     float fator = GetRandomValue(110, 200) / 100.0f;
     float escala = o.escala * fator;
 
@@ -137,7 +137,7 @@ static void padrao_chuva(Game *g, Onda o, int n) {
     spawn_bala(g, (Bala){
         .r       = { x, g->caixa.y - h, w, h },   // logo acima da caixa
         .vel     = { 0, 120 },
-        .recorta = true,                          // so aparece quando entra
+        .recorta = true,                          // so aparece qnd entra
         .textura = &lagrima,
         .escala  = escala,                       
     });
@@ -233,14 +233,14 @@ static void padrao_barreira(Game *g, Onda o, int n) {
 
 // ---------------------------------------------------------------------------------
 
-// espingarda: a cada disparo, um leque de K balas mirado na alma, saindo de fora da
-// caixa. alterna esquerda/direita; a altura e aleatoria em ate 0.75 caixa acima ou
-// abaixo do centro (cobre 1.5 caixa). sem recorte: da pra ver a bala chegando.
+// espingarda: a cada disparo, um leque de k balas mirado na alma, saindo de fora da
+// caixa. alterna esquerda/direita; a altura e aleatoria 
+// em uma area ao redor do centro da caixa cobrindo 1.5x tamanho del
 static void padrao_espingarda(Game *g, Onda o, int n) {
     const int   K      = 6;                 // balas por disparo
-    const float ABERTO = 60 * DEG2RAD;      // abertura total do leque
+    const float ABERTO = 60 * DEG2RAD;      // abertura do leque
     const float VEL    = 140.0f;            // px/s
-    const float DIST   = 50.0f;             // distancia da boca ate a parede da caixa
+    const float DIST   = 50.0f;             // distancia da origem ate parde da caixa
     const float TAM    = 6 * o.escala;
 
     Vector2 c = centro(g->caixa);
@@ -280,8 +280,7 @@ static void padrao_faca(Game *g, Onda o, int n) {
     const float RAIO  = 120.0f;   // distancia do centro da caixa onde a faca nasce
     const float SEGUE = 0.6f;     // s acompanhando a alma (mesma distancia, mesma mira)
     const float AVISO = 0.0f;     // s congelada antes de disparar
-    const float ACEL  = 55000.0f;  // px/s²
-    // recua RECUO²/(2*ACEL) px (~12px) por RECUO/ACEL s (~0.1s)
+    const float ACEL  = 55000.0f;  // px/s^2
     const float RECUO = 250.0f;   // px/s
     const int   M     = 10;       // quadradinhos na lamina
     const float PASSO = 4 * o.escala;   // distancia entre eles (comprimento ~ M*PASSO)
@@ -364,7 +363,7 @@ bool att_ondas(Game *g, float dt) {
         exec_padrao(g, atual, g->disparo);
         g->disparo++;
     }
-    
+
     if (g->tempoOnda > atual.duracao && !tem_balas(g)) {
         g->onda++;
         g->tempoOnda = 0;
