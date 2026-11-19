@@ -5,6 +5,7 @@ static void dano_player(Game *g) {
     PlaySound(dano);
     g->hp -= 10;
     g->iframes = 1.0f;
+    efeito_dano();
 }
 
 void spawn_bala(Game *g, Bala nova) {
@@ -28,17 +29,35 @@ void spawn_bala(Game *g, Bala nova) {
 
 // sem sprite desenha quadrado
 static void desenha_bala(Bala *b) {
-    Color cor = b->rebativel ? PINK : WHITE;
+    Color cor = b->rebativel ? ORANGE : WHITE;
     if (b->textura != NULL) {
         float px = b->r.x + (b->r.width  - b->textura->width  * b->escala) / 2.0f;
         float py = b->r.y + (b->r.height - b->textura->height * b->escala) / 2.0f;
         DrawTextureEx(*b->textura, (Vector2){ px, py }, 0.0f, b->escala, cor);
+    } else if (b->oval) {
+        DrawEllipse(b->r.x + b->r.width / 2, b->r.y + b->r.height / 2,
+                    b->r.width / 2, b->r.height / 2, cor);
     } else {
         DrawRectangleRec(b->r, cor);
     }
 }
 
+// oval: ponto da hitbox mais perto do centro da elipse, dentro dela?
+static bool acerta(Rectangle hitbox, Bala *b) {
+    if (!b->oval) return CheckCollisionRecs(hitbox, b->r);
+
+    float rx = b->r.width / 2, ry = b->r.height / 2;
+    Vector2 c = { b->r.x + rx, b->r.y + ry };
+    float px = Clamp(c.x, hitbox.x, hitbox.x + hitbox.width);
+    float py = Clamp(c.y, hitbox.y, hitbox.y + hitbox.height);
+    float dx = (px - c.x) / rx, dy = (py - c.y) / ry;
+    return dx * dx + dy * dy <= 1;
+}
+
 void att_entidades(Game *g, float dt) {
+    // decrementa imunidade dps de tomar dano
+    if (g->iframes > 0) g->iframes -= dt;
+
     // mover balas
 
      for (int i = 0; i < MAX_BALAS; i++) {
@@ -74,12 +93,20 @@ void att_entidades(Game *g, float dt) {
             b->vel.y += b->acel.y*dt;
             b->r.x += b->vel.x*dt;      // posicao
             b->r.y += b->vel.y*dt;
+
+            // quica: so inverte se estiver indo pra fora (bala que nasce fora da caixa entra normal)
+            if (b->quica) {
+                float esq = g->caixa.x + BORDA;
+                float dir = g->caixa.x + g->caixa.width - BORDA;
+                if (b->r.x < esq && b->vel.x < 0)                 b->vel.x = -b->vel.x;
+                if (b->r.x + b->r.width > dir && b->vel.x > 0)    b->vel.x = -b->vel.x;
+            }
         }
 
         // hitbox da alma: 8x8 centrado no jogador (jogador = centro do sprite).
         Rectangle hitbox = { g->jogador.x - HITBOX_ALMA / 2, g->jogador.y - HITBOX_ALMA / 2,
                              HITBOX_ALMA, HITBOX_ALMA };
-        if (CheckCollisionRecs(hitbox, b->r)) {
+        if (acerta(hitbox, b)) {
             if (g->iframes <= 0) dano_player(g);
             if (!b->persiste) b->ativo = false;
         }
@@ -97,9 +124,6 @@ void att_entidades(Game *g, float dt) {
 
 
 void desenha_entidades(Game *g) {
-    float dt = GetFrameTime();
-    // decrementa imunidade dps de tomar dano
-    if (g->iframes > 0) g->iframes -= dt;
 
     // linhas de aviso saem do centro da bala na direcao da acel e
     // atravessam a tela. so enquanto espera ou recua (vel contra a acel).

@@ -22,7 +22,8 @@ typedef enum ActionType {
     NO_ACTION = 0,
     ACTION_UP, ACTION_DOWN, ACTION_LEFT, ACTION_RIGHT,
     ACTION_PARRY,
-    MAX_ACTION // 6
+    ACTION_FOCO,
+    MAX_ACTION // 7
 } ActionType;
 
 // 
@@ -43,7 +44,6 @@ static bool IsActionDown(int action);       // durante acao
 
 static void SetActionsDefault(void);        // define WASD
 static void SetActionsCursor(void);         // define setinhas
-static void desenha_olho(Vector2 centro, Vector2 alvo); // do exemplo raylib shapes_following_eyes
 
 // um par atualiza/desenha por estado
 static void atualiza_jogando(Game *g, float dt);
@@ -90,7 +90,7 @@ int main(void)
     dano = LoadSound("assets/snd-hurt1.ogg");      
     alma = LoadTexture("assets/alma.png");
 
-    // olhos: descomentar quando os arquivos existirem (ver desenha_olho)
+    // olhos: descomentar quando os arquivos existirem (ver desenha_olho em olhos.c)
     // Texture2D esclera = LoadTexture("assets/esclera.png");
     // Texture2D iris    = LoadTexture("assets/iris.png");
 
@@ -108,9 +108,10 @@ int main(void)
         float dt = GetFrameTime();
 
         // controle de estados. morte e vitoria: congela (a implementar)
+        bool congelado = efeito_congelado(dt);   // hitstop (efeitos.c)
         switch (g.estado)
         {
-        case ESTADO_JOGANDO: atualiza_jogando(&g, dt); break;
+        case ESTADO_JOGANDO: if (!congelado) atualiza_jogando(&g, dt); break;
         case ESTADO_MORTE:   break;
         case ESTADO_VITORIA: break;
         }
@@ -149,11 +150,13 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(BLACK);
+            Vector2 tremor = efeito_tremor();
             DrawTexturePro(
                 alvo.texture,
                 // altura NEGATIVA: raylib guarda a render texture invertida no eixo Y
                 (Rectangle){ 0, 0, (float)alvo.texture.width, -(float)alvo.texture.height },
-                (Rectangle){ 0, 0, (float)screenWidth * escala, (float)screenHeight * escala },
+                (Rectangle){ tremor.x * escala, tremor.y * escala,
+                             (float)screenWidth * escala, (float)screenHeight * escala },
                 (Vector2){ 0, 0 }, 0.0f, WHITE);
 
         EndDrawing();
@@ -179,10 +182,12 @@ static void atualiza_jogando(Game *g, float dt)
 {
     // movimentacao
     gamepadIndex = 0;
-    if (IsActionDown(ACTION_UP))    g->jogador.y -= dt * VEL_JOGADOR;
-    if (IsActionDown(ACTION_DOWN))  g->jogador.y += dt * VEL_JOGADOR;
-    if (IsActionDown(ACTION_LEFT))  g->jogador.x -= dt * VEL_JOGADOR;
-    if (IsActionDown(ACTION_RIGHT)) g->jogador.x += dt * VEL_JOGADOR;
+    // modo foco: segurando, anda mais devagar
+    float vel = VEL_JOGADOR * (IsActionDown(ACTION_FOCO) ? VEL_FOCO : 1.0f);
+    if (IsActionDown(ACTION_UP))    g->jogador.y -= dt * vel;
+    if (IsActionDown(ACTION_DOWN))  g->jogador.y += dt * vel;
+    if (IsActionDown(ACTION_LEFT))  g->jogador.x -= dt * vel;
+    if (IsActionDown(ACTION_RIGHT)) g->jogador.x += dt * vel;
 
     // x e y da caixa nao contam borda. hitbox da alma fica no canto e nao no centro. / 2 ajeita
     float meiaW = alma.width  / 2.0f;
@@ -197,6 +202,7 @@ static void atualiza_jogando(Game *g, float dt)
     g->jogador.y = Clamp(g->jogador.y, yMin, yMax);
 
     att_parry(g, IsActionPressed(ACTION_PARRY), dt);
+    olhos_att(dt);
     att_entidades(g, dt);
 
     // sequencia de ondas retorna true quando todos os ataques acabam -> vitoria
@@ -211,19 +217,21 @@ static void desenha_jogando(Game *g)
     DrawRectangleLinesEx(g->caixa, 5, WHITE);
     // DrawTexture desenha a partir do canto superior esquerdo
     // desloca metade do tamanho pra centralizar a alma na posicao do jogador
-    DrawTexture(alma, g->jogador.x - alma.width / 2.0f, g->jogador.y - alma.height / 2.0f, WHITE);
+    // invencivel: pisca (10 metades por segundo)
+    if (g->iframes <= 0 || (int)(g->iframes * 10) % 2 == 0)
+        DrawTexture(alma, g->jogador.x - alma.width / 2.0f, g->jogador.y - alma.height / 2.0f, WHITE);
+
+    // modo foco: mostra a hitbox real
+    if (IsActionDown(ACTION_FOCO))
+        DrawRectangleRec((Rectangle){ g->jogador.x - HITBOX_ALMA / 2.0f, g->jogador.y - HITBOX_ALMA / 2.0f,
+                                      HITBOX_ALMA, HITBOX_ALMA }, Fade(WHITE, 0.8f));
 
     DrawText(TextFormat("HP: %d; ESTADO: %d", g->hp, g->estado), 10, 50, 20, GREEN);
 
     desenha_entidades(g);
     desenha_parry(g);
 
-    // olhos acima da caixa, seguindo a alma
-    // piscando: 6 metades em 1s = 3 piscadas
-    if (g->anim_inimigo <= 0 || (int)(g->anim_inimigo * 6) % 2 == 0) {
-        desenha_olho((Vector2){ VIRTUAL_W / 2.0f - 50, 130 }, g->jogador);
-        desenha_olho((Vector2){ VIRTUAL_W / 2.0f + 50, 130 }, g->jogador);
-    }
+    desenha_olhos(g);   // olhos.c
 }
 
 // verifica botao pressionado
@@ -261,7 +269,9 @@ static void SetActionsDefault(void)
     actionInputs[ACTION_LEFT].key = KEY_A;
     actionInputs[ACTION_RIGHT].key = KEY_D;
     actionInputs[ACTION_PARRY].key = KEY_SPACE;
+    actionInputs[ACTION_FOCO].key = KEY_LEFT_SHIFT;
 
+    actionInputs[ACTION_FOCO].button = GAMEPAD_BUTTON_RIGHT_TRIGGER_1;
     actionInputs[ACTION_UP].button = GAMEPAD_BUTTON_LEFT_FACE_UP;
     actionInputs[ACTION_DOWN].button = GAMEPAD_BUTTON_LEFT_FACE_DOWN;
     actionInputs[ACTION_LEFT].button = GAMEPAD_BUTTON_LEFT_FACE_LEFT;
@@ -277,42 +287,12 @@ static void SetActionsCursor(void)
     actionInputs[ACTION_LEFT].key = KEY_LEFT;
     actionInputs[ACTION_RIGHT].key = KEY_RIGHT;
     actionInputs[ACTION_PARRY].key = KEY_SPACE;
+    actionInputs[ACTION_FOCO].key = KEY_LEFT_SHIFT;
 
+    actionInputs[ACTION_FOCO].button = GAMEPAD_BUTTON_LEFT_TRIGGER_1;
     actionInputs[ACTION_UP].button = GAMEPAD_BUTTON_RIGHT_FACE_UP;
     actionInputs[ACTION_DOWN].button = GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
     actionInputs[ACTION_LEFT].button = GAMEPAD_BUTTON_RIGHT_FACE_LEFT;
     actionInputs[ACTION_RIGHT].button = GAMEPAD_BUTTON_RIGHT_FACE_RIGHT;
     actionInputs[ACTION_PARRY].button = GAMEPAD_BUTTON_LEFT_FACE_DOWN;
-}
-
-// olho que segue o alvo
-// adaptado de raylib/examples/shapes/shapes_following_eyes.c
-static void desenha_olho(Vector2 centro, Vector2 alvo)
-{
-    const float raioEsclera = 40.0f;
-    const float raioIris = 12.0f;
-
-    Vector2 iris = alvo;
-    // se o alvo esta fora do alcance, prende a iris na borda da esclera na direcao do alvo
-    if (!CheckCollisionPointCircle(iris, centro, raioEsclera - raioIris))
-    {
-        float angulo = atan2f(alvo.y - centro.y, alvo.x - centro.x);
-        iris.x = centro.x + (raioEsclera - raioIris) * cosf(angulo);
-        iris.y = centro.y + (raioEsclera - raioIris) * sinf(angulo);
-    }
-
-    DrawCircleV(centro, raioEsclera, LIGHTGRAY);
-    DrawCircleV(iris, raioIris, BROWN);
-    DrawCircleV(iris, 5, BLACK);
-
-    /* versao com textura (quando assets/esclera.png e assets/iris.png existirem):
-       1. assinatura vira: desenha_olho(Vector2 centro, Vector2 alvo, Texture2D texEsclera, Texture2D texIris)
-          (atualizar a declaracao la em cima e as duas chamadas: ..., g.jogador, esclera, iris)
-       2. raios vem do tamanho das imagens:
-            const float raioEsclera = texEsclera.width / 2.0f;
-            const float raioIris    = texIris.width / 2.0f;
-       3. troca os tres DrawCircleV por (DrawTexture desenha do canto superior esquerdo, entao centraliza):
-            DrawTexture(texEsclera, centro.x - texEsclera.width / 2.0f, centro.y - texEsclera.height / 2.0f, WHITE);
-            DrawTexture(texIris,    iris.x   - texIris.width    / 2.0f, iris.y   - texIris.height    / 2.0f, WHITE);
-    */
 }

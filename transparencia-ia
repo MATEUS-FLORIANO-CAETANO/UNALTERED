@@ -10,6 +10,7 @@
 (tudo revisado pela equipe)
 3. criação da Makefile
 4. bug fix de texturas e sons que nao carregavam devido ao caminho dos arquivos ser relativo ao local do executavel
-
+5. implementação de efeitos
+6. conserto do rebate
 
 a logica em geral, a estrutura do motor, e toda arte em musica foi feita por humanos

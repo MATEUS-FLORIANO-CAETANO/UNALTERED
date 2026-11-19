@@ -26,6 +26,7 @@ void att_parry(Game *g, bool apertou, float dt) {
         if (g->janela_parry > 0 && b->vel.y > 0 && CheckCollisionRecs(zona, b->r)) {
             b->vel.y = -b->vel.y;
             g->janela_parry = 0;   // um rebate por aperto
+            efeito_parry();
         }
 
         // chegou no inimigo (subindo): devolve ou some
@@ -33,6 +34,8 @@ void att_parry(Game *g, bool apertou, float dt) {
             if (b->rebates > 0) {
                 b->rebates--;
                 b->vel.y = -b->vel.y * MULT_REBATE;
+                efeito_rebate();
+                olhos_rebate();
             } else {
                 b->ativo = false;
                 g->anim_inimigo = 1.0f;
@@ -44,6 +47,6 @@ void att_parry(Game *g, bool apertou, float dt) {
 void desenha_parry(Game *g) {
     if (!g->parry) return;
     Rectangle zona = zona_parry(g->jogador);
-    if (g->janela_parry > 0) DrawRectangleRec(zona, Fade(YELLOW, 0.5f));   // ativa
-    DrawRectangleLinesEx(zona, 1, YELLOW);
+    if (g->janela_parry > 0) DrawRectangleRec(zona, Fade(PINK, 0.5f));   // ativa
+    DrawRectangleLinesEx(zona, 1, PINK);
 }

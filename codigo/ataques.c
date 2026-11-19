@@ -18,9 +18,8 @@
  *
  *
  *em geral:
- *- golpe que cai do ceu com pouca vel pra baixo e muita vel lateral, quando chega na borda da caixa inverte, como se tivesse quicando
+ *- golpe que cai do ceu com pouca vel pra baixo e muita vel lateral, quando chega na borda da caixa inverte, como se tivesse quicando (.quica)
  *- chuva que cai tudo de uma vez, mas marca com laser antes pra encontrar a "folga"
- *- balas que deixam rastro
  *- n balas no centro, velocidade pra fora "explosao"
  *
 */
@@ -53,31 +52,29 @@
  *       .persiste = true,                        // nao some ao acertar
  *       .recorta  = true,                        // so aparece dentro da caixa
  *       .textura  = &sprite, .escala = o.escala,
- *       .etc...
+ *       .segue    = 0.6f,                        // s acompanhando a alma antes da espera
+ *       .vida     = 2.0f,                        // s ate sumir (0 = nunca)
+ *       .persegue = 2.0f,                        // rad/s girando a vel pra alma
+ *       .laser    = true,                        // aviso roxo na direcao da ACEL (nao da vel)
+ *       .quica    = true,                        // inverte vel.x nas paredes laterais da caixa
+ *       .oval     = true,                        // desenha e colide como elipse
+ *       .rebativel = true, .rebates = 2,         // bala de parry (ver padrao_parry)
  *   });
  *
- * dps coloca nome no enum, case no switch, linha na tabela ondas[].
+ * dps coloca uma linha na tabela ondas[].
  */
 
-// um nome para cada padrão
-typedef enum {
-    PAD_CHUVA,
-    PAD_CIRCULO,
-    PAD_BARREIRA,
-    PAD_ESPINGARDA,
-    PAD_FACA,
-    PAD_PARRY
-    /* ... */
-} TipoAtaque;
-
-// cada onda carrega o tipo do ataque, sua duracao (s), o intervalo entre disparos (s)
+// cada onda carrega a funcao do padrao, sua duracao (s), o intervalo entre disparos (s)
 // e a escala das balas
-typedef struct {
-    TipoAtaque tipo;
+typedef struct Onda Onda;
+typedef void (*Padrao)(Game *g, Onda o, int n);
+
+struct Onda {
+    Padrao padrao;
     float duracao;
     float intervalo;
     float escala;
-} Onda;
+};
 
 
 // ---------------------------------------------------------------------------------
@@ -320,8 +317,10 @@ static void padrao_parry(Game *g, Onda o, int n) {
     float h = 15;
 
     spawn_bala(g, (Bala){
-        .r         = { in.x, g->caixa.y - h * 2, in.width, h },
+        .r         = { in.x, LINHA_INIMIGO + 5, in.width, h },   // logo abaixo dos olhos
         .vel       = { 0, 90 },
+        .espera    = 0.5f,
+        .oval      = true,
         .recorta   = false,
         .persiste  = true,
         .rebativel = true,
@@ -332,38 +331,19 @@ static void padrao_parry(Game *g, Onda o, int n) {
 
 // ----------------------------------------------------------------------------------
 
-// chama o padrao do tipo da onda
-static void exec_padrao(Game *g, Onda o, int n) {
-    switch (o.tipo) {
-        case PAD_CHUVA:    padrao_chuva(g, o, n);    break;
-        case PAD_CIRCULO:  padrao_circulo(g, o, n);  break;
-        case PAD_BARREIRA: padrao_barreira(g, o, n); break;
-        case PAD_ESPINGARDA: padrao_espingarda(g, o, n); break;
-        case PAD_FACA:     padrao_faca(g, o, n);     break;
-
-        case PAD_PARRY:     padrao_parry(g, o, n);        break; 
-        /* case PAD_X:     padrao_x(g, o, n);        break; */
-        default:           break;
-    }
-}
-
-/*
- * nova onda: linha aqui
- * novo ataque: nome em enum, função padrao, case no switch
- */
-
+// nova onda ou novo ataque: so uma linha aqui
 static Onda ondas[] = {
-    // tipo        duracao  intervalo  escala
-    { PAD_CHUVA,    15.0f,    0.15f,     1.0f },   // chuva leve
-    { PAD_PARRY,     0.1f,   99.0f,      1.0f },   // pong, 0 devolvida
-    { PAD_CIRCULO,  16.0f,    2.0f,      1.0f },   // circulo do jevil
-    { PAD_PARRY,     0.1f,   99.0f,      1.0f },   // pong, 1 devolvida
-    { PAD_BARREIRA, 12.0f,    0.4f,      1.0f },   // barreiras do sans
-    { PAD_PARRY,     0.1f,   99.0f,      1.0f },   // pong, 2 devolvida
-    { PAD_ESPINGARDA, 8.0f,  0.8f,      1.0f },   // espingarda
-    { PAD_PARRY,     0.1f,   99.0f,      1.0f },   // pong, 3 devolvidas
-    { PAD_FACA,     15.0f,    0.6f,      1.0f },   // facas com aviso
-    { PAD_PARRY,     0.1f,   99.0f,      1.0f },   // pong, 4 devolvida
+    // padrao             duracao  intervalo  escala
+    { padrao_chuva,       15.0f,   0.15f,     1.0f },   // chuva leve
+    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 0 devolvida
+    { padrao_circulo,     16.0f,   2.0f,      1.0f },   // circulo do jevil
+    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 1 devolvida
+    { padrao_barreira,    12.0f,   0.4f,      1.0f },   // barreiras do sans
+    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 2 devolvida
+    { padrao_espingarda,   8.0f,   0.8f,      1.0f },   // espingarda
+    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 3 devolvidas
+    { padrao_faca,        15.0f,   0.6f,      1.0f },   // facas com aviso
+    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 4 devolvida
 };
 
 // quantidade de ondas = tamanho total / tamanho de cada
@@ -389,13 +369,13 @@ bool att_ondas(Game *g, float dt) {
     // depois da duracao para de disparar
     if (g->tempoOnda <= atual.duracao &&
         g->tempoOnda >= g->disparo * atual.intervalo) {
-        exec_padrao(g, atual, g->disparo);
+        atual.padrao(g, atual, g->disparo);
         g->disparo++;
     }
 
     if (g->tempoOnda > atual.duracao && !tem_balas(g)) {
         g->onda++;
-        g->tempoOnda = 0;
+        g->tempoOnda = -PAUSA_ONDAS;   // negativo: espera antes do 1o disparo
         g->disparo = 0;
         g->parry = 0;
     }

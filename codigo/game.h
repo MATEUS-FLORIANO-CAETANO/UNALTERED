@@ -41,6 +41,8 @@ typedef struct {
                           // espera ou recua (some quando comeca a ir pra frente)
     bool rebativel;       // true = da pra dar parry
     int rebates;          // vezes que o inimigo ainda devolve
+    bool oval;            // desenha e colide como elipse dentro de r
+    bool quica;           // inverte vel.x nas paredes laterais da caixa
 
     Texture2D *textura;   // NULL = quadrado branco
     float escala;         // multiplica tam do desenho
@@ -73,6 +75,8 @@ typedef struct {
 } Game;
 
 #define LINHA_INIMIGO 170   // base dos olhos (y=130, raio 40)
+#define PAUSA_ONDAS 0.8f    // segs. de respiro entre ondas
+#define VEL_FOCO 0.5f       // multiplica vel. da alma no modo foco
 #define JANELA_PARRY 0.2f   // segs. de hitbox ativa por aperto
 #define MULT_REBATE 1.3f    // vel. quando o inimigo devolve
 
@@ -87,5 +91,17 @@ bool att_ondas(Game *g, float dt);
 // declaracoes: parry.c
 void att_parry(Game *g, bool apertou, float dt);
 void desenha_parry(Game *g);
+
+// declaracoes: olhos.c
+void olhos_rebate(void);
+void olhos_att(float dt);
+void desenha_olhos(Game *g);
+
+// declaracoes: efeitos.c
+void efeito_dano(void);
+void efeito_parry(void);
+void efeito_rebate(void);
+bool efeito_congelado(float dt);
+Vector2 efeito_tremor(void);
 
 #endif
