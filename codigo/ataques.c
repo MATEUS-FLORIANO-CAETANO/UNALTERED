@@ -154,7 +154,7 @@ static void padrao_circulo(Game *g, Onda o, int n) {
 
     const int   N      = 8;
     const float RAIO   = 110.0f;   
-    const float ACEL   = 200.0f;   // px/s^2
+    const float ACEL   = 300.0f;   // px/s^2
     const float ATRASO = 0.10f;    // segs. entre uma bala e a vizinha (volta = N*ATRASO)
     // recuo (telegrafa o ataque): a bala sai pra fora com velocidade do recuo e a acel faz voltar pro centro
     const float RECUO  = 60.0f;    // px/s
@@ -329,11 +329,11 @@ static void exec_padrao(Game *g, Onda o, int n) {
 
 static Onda ondas[] = {
     // tipo        duracao  intervalo  escala
-//    { PAD_CHUVA,    8.0f,    0.25f,     1.0f },   // chuva leve
-//    { PAD_CHUVA,    8.0f,    0.40f,     2.0f },   // chuva pesada
-//    { PAD_CIRCULO,  8.0f,    2.0f,      1.0f },   // circulo do jevil
-//    { PAD_BARREIRA, 8.0f,    0.4f,      1.0f },   // barreiras do sans
-//    { PAD_ESPINGARDA, 8.0f,  0.8f,      1.0f },   // espingarda
+    { PAD_CHUVA,    8.0f,    0.15f,     1.0f },   // chuva leve
+    { PAD_CHUVA,    8.0f,    0.40f,     2.0f },   // chuva pesada
+    { PAD_CIRCULO,  8.0f,    2.0f,      1.0f },   // circulo do jevil
+    { PAD_BARREIRA, 8.0f,    0.4f,      1.0f },   // barreiras do sans
+    { PAD_ESPINGARDA, 8.0f,  0.8f,      1.0f },   // espingarda
     { PAD_FACA,     8.0f,    0.6f,      1.0f },   // facas com aviso
 };
 
