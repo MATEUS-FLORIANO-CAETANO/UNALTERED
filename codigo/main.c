@@ -45,6 +45,12 @@ static void SetActionsDefault(void);        // define WASD
 static void SetActionsCursor(void);         // define setinhas
 static void desenha_olho(Vector2 centro, Vector2 alvo); // do exemplo raylib shapes_following_eyes
 
+// um par atualiza/desenha por estado
+static void atualiza_jogando(Game *g, float dt);
+static void desenha_jogando(Game *g);
+
+static Texture2D alma;
+
 int main(void)
 {
     //-----------------------------------------------------------------------------------------
@@ -52,7 +58,6 @@ int main(void)
     Game g = {0};
     const int screenWidth = VIRTUAL_W;
     const int screenHeight = VIRTUAL_H;
-    const int vel = VEL_JOGADOR;
     const int escala = 2;
 
     g.hp = 100;
@@ -83,7 +88,7 @@ int main(void)
     ChangeDirectory(GetApplicationDirectory());
     ChangeDirectory("..");
     dano = LoadSound("assets/snd-hurt1.ogg");      
-    Texture2D alma = LoadTexture("assets/alma.png");
+    alma = LoadTexture("assets/alma.png");
 
     // olhos: descomentar quando os arquivos existirem (ver desenha_olho)
     // Texture2D esclera = LoadTexture("assets/esclera.png");
@@ -92,7 +97,6 @@ int main(void)
     //  Padrao WASD
     char actionSet = 0;
     SetActionsDefault();
-    bool releaseAction = false;
 
 
     SetTargetFPS(60);
@@ -103,68 +107,22 @@ int main(void)
     {
         float dt = GetFrameTime();
 
-        // controle de estados:
-        // ESTADO_MORTE e ESTADO_VITORIA n tem nada ainda
+        // controle de estados. morte e vitoria: congela (a implementar)
         switch (g.estado)
         {
-        case ESTADO_JOGANDO:
-        {
-            // movimentacao
-            gamepadIndex = 0; //
-            if (IsActionDown(ACTION_UP)) g.jogador.y -= dt*vel;
-            if (IsActionDown(ACTION_DOWN)) g.jogador.y += dt*vel;
-            if (IsActionDown(ACTION_LEFT)) g.jogador.x -= dt*vel;
-            if (IsActionDown(ACTION_RIGHT)) g.jogador.x += dt*vel;
-            if (IsActionPressed(ACTION_PARRY))
-            {
-                // n faz nada ainda, placeholder pra uma "defesa"
-            }
-
-            // x e y da caixa nao contam borda. hitbox da alma fica no canto e nao no centro. / 2 ajeita
-            float meiaW = alma.width  / 2.0f; // centro x
-            float meiaH = alma.height / 2.0f; // centro y
-            
-            float xMin = g.caixa.x + BORDA + meiaW;
-            float xMax = g.caixa.x + g.caixa.width  - BORDA - meiaW; // direita
-            float yMin = g.caixa.y + BORDA + meiaH;
-            float yMax = g.caixa.y + g.caixa.height - BORDA - meiaH;
-
-            g.jogador.x = Clamp(g.jogador.x, xMin, xMax);
-            g.jogador.y = Clamp(g.jogador.y, yMin, yMax);
-
-            att_entidades(&g, dt);
-
-            // sequencia de ondas retorna true quando todos os ataques acabam -> vitoria
-            // TROCAR SE IMPLEMENTAR O PARRY
-            if (att_ondas(&g, dt)) g.estado = ESTADO_VITORIA;
-
-            
-            if (g.hp <= 0) g.estado = ESTADO_MORTE;
-        } break;
-
-        case ESTADO_MORTE:
-            // tela de morte (a implementar)
-            break;
-
-        case ESTADO_VITORIA:
-            // tela de vitoria (a implementar)
-            break;
+        case ESTADO_JOGANDO: atualiza_jogando(&g, dt); break;
+        case ESTADO_MORTE:   break;
+        case ESTADO_VITORIA: break;
         }
 
-    /* parry, nao implementado
-        releaseAction = false;
-        if (IsActionReleased(ACTION_PARRY)) releaseAction = true;
-    */
-
-    /* TAB
-        // tab: WASD <---> SETAS 
+        // tab: WASD <---> SETAS
         if (IsKeyPressed(KEY_TAB))
         {
             actionSet = !actionSet;
             if (actionSet == 0) SetActionsDefault();
             else SetActionsCursor();
         }
-    */
+    
 
         //----------------------------------------------------------------------------------
         // desenhar
@@ -177,18 +135,12 @@ int main(void)
         BeginTextureMode(alvo);
 
             ClearBackground(BLACK);
-            DrawRectangleLinesEx(g.caixa, 5, WHITE);
-            // DrawTexture desenha a partir do canto superior esquerdo
-            // desloca metade do tamanho pra centralizar a alma na posicao do jogador
-            DrawTexture(alma, g.jogador.x - alma.width / 2.0f, g.jogador.y - alma.height / 2.0f, WHITE);
-
-             DrawText(TextFormat("HP: %d; ESTADO: %d", g.hp, g.estado), 10, 50, 20, GREEN);
-
-            desenha_entidades(&g);
-
-            // olhos acima da caixa, seguindo a alma
-            desenha_olho((Vector2){ screenWidth / 2.0f - 50, 130 }, g.jogador);
-            desenha_olho((Vector2){ screenWidth / 2.0f + 50, 130 }, g.jogador);
+            switch (g.estado)
+            {
+            case ESTADO_JOGANDO: desenha_jogando(&g); break;
+            case ESTADO_MORTE:   desenha_jogando(&g); break;   // congelado (a implementar)
+            case ESTADO_VITORIA: desenha_jogando(&g); break;   // congelado (a implementar)
+            }
 
         EndTextureMode();
 
@@ -221,7 +173,58 @@ int main(void)
 }
 
 //----------------------------------------------------------------------------------
-// definicao de funcoes 
+// definicao de funcoes
+
+static void atualiza_jogando(Game *g, float dt)
+{
+    // movimentacao
+    gamepadIndex = 0;
+    if (IsActionDown(ACTION_UP))    g->jogador.y -= dt * VEL_JOGADOR;
+    if (IsActionDown(ACTION_DOWN))  g->jogador.y += dt * VEL_JOGADOR;
+    if (IsActionDown(ACTION_LEFT))  g->jogador.x -= dt * VEL_JOGADOR;
+    if (IsActionDown(ACTION_RIGHT)) g->jogador.x += dt * VEL_JOGADOR;
+
+    // x e y da caixa nao contam borda. hitbox da alma fica no canto e nao no centro. / 2 ajeita
+    float meiaW = alma.width  / 2.0f;
+    float meiaH = alma.height / 2.0f;
+
+    float xMin = g->caixa.x + BORDA + meiaW;
+    float xMax = g->caixa.x + g->caixa.width  - BORDA - meiaW;
+    float yMin = g->caixa.y + BORDA + meiaH;
+    float yMax = g->caixa.y + g->caixa.height - BORDA - meiaH;
+
+    g->jogador.x = Clamp(g->jogador.x, xMin, xMax);
+    g->jogador.y = Clamp(g->jogador.y, yMin, yMax);
+
+    att_parry(g, IsActionPressed(ACTION_PARRY), dt);
+    att_entidades(g, dt);
+
+    // sequencia de ondas retorna true quando todos os ataques acabam -> vitoria
+    if (att_ondas(g, dt)) g->estado = ESTADO_VITORIA;
+
+    if (g->hp <= 0) g->estado = ESTADO_MORTE;
+    if (g->contador_inimigo == 5) g->estado = ESTADO_VITORIA;   // congela ate ter tela de vitoria
+}
+
+static void desenha_jogando(Game *g)
+{
+    DrawRectangleLinesEx(g->caixa, 5, WHITE);
+    // DrawTexture desenha a partir do canto superior esquerdo
+    // desloca metade do tamanho pra centralizar a alma na posicao do jogador
+    DrawTexture(alma, g->jogador.x - alma.width / 2.0f, g->jogador.y - alma.height / 2.0f, WHITE);
+
+    DrawText(TextFormat("HP: %d; ESTADO: %d", g->hp, g->estado), 10, 50, 20, GREEN);
+
+    desenha_entidades(g);
+    desenha_parry(g);
+
+    // olhos acima da caixa, seguindo a alma
+    // piscando: 6 metades em 1s = 3 piscadas
+    if (g->anim_inimigo <= 0 || (int)(g->anim_inimigo * 6) % 2 == 0) {
+        desenha_olho((Vector2){ VIRTUAL_W / 2.0f - 50, 130 }, g->jogador);
+        desenha_olho((Vector2){ VIRTUAL_W / 2.0f + 50, 130 }, g->jogador);
+    }
+}
 
 // verifica botao pressionado
 static bool IsActionPressed(int action)

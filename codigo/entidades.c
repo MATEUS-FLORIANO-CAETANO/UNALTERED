@@ -28,12 +28,13 @@ void spawn_bala(Game *g, Bala nova) {
 
 // sem sprite desenha quadrado
 static void desenha_bala(Bala *b) {
+    Color cor = b->rebativel ? PINK : WHITE;
     if (b->textura != NULL) {
         float px = b->r.x + (b->r.width  - b->textura->width  * b->escala) / 2.0f;
         float py = b->r.y + (b->r.height - b->textura->height * b->escala) / 2.0f;
-        DrawTextureEx(*b->textura, (Vector2){ px, py }, 0.0f, b->escala, WHITE);
+        DrawTextureEx(*b->textura, (Vector2){ px, py }, 0.0f, b->escala, cor);
     } else {
-        DrawRectangleRec(b->r, WHITE);
+        DrawRectangleRec(b->r, cor);
     }
 }
 
@@ -59,7 +60,7 @@ void att_entidades(Game *g, float dt) {
         } else if (b->espera > 0) {
             b->espera -= dt;
         } else {
-            // perseguidora: gira a vel no maximo persegue*dt rad em direcao a alma
+        // perseguidora: gira a vel no maximo persegue*dt rad em direcao a alma
             if (b->persegue > 0) {
                 Vector2 meio = { b->r.x + b->r.width / 2, b->r.y + b->r.height / 2 };
                 Vector2 alvo = Vector2Subtract(g->jogador, meio);

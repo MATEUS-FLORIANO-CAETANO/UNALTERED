@@ -66,6 +66,7 @@ typedef enum {
     PAD_BARREIRA,
     PAD_ESPINGARDA,
     PAD_FACA,
+    PAD_PARRY
     /* ... */
 } TipoAtaque;
 
@@ -126,9 +127,10 @@ static void padrao_chuva(Game *g, Onda o, int n) {
     float fator = GetRandomValue(110, 200) / 100.0f;
     float escala = o.escala * fator;
 
-    // hitbox base 10x10 (o png e 32x32, mas o desenho visivel e ~10x13)
+    // hitbox base 10x7 (o png e 32x32, mas o desenho visivel e ~10x13)
+    // mais baixa que larga: a ponta fina da gota nao machuca
     float w = 10 * escala;
-    float h = 10 * escala;
+    float h = 7 * escala;
 
     // x aleatorio dentro da caixa, sem passar da parede direita
     Rectangle in = interior(g);
@@ -309,6 +311,27 @@ static void padrao_faca(Game *g, Onda o, int n) {
 
 // ---------------------------------------------------------------------------------
 
+static void padrao_parry(Game *g, Onda o, int n) {
+    (void)o;
+    if (n > 0) return;
+    g->parry = true;
+
+    Rectangle in = interior(g);
+    float h = 15;
+
+    spawn_bala(g, (Bala){
+        .r         = { in.x, g->caixa.y - h * 2, in.width, h },
+        .vel       = { 0, 90 },
+        .recorta   = false,
+        .persiste  = true,
+        .rebativel = true,
+        .rebates   = g->contador_inimigo,
+    });
+    g->contador_inimigo++;
+}
+
+// ----------------------------------------------------------------------------------
+
 // chama o padrao do tipo da onda
 static void exec_padrao(Game *g, Onda o, int n) {
     switch (o.tipo) {
@@ -317,6 +340,8 @@ static void exec_padrao(Game *g, Onda o, int n) {
         case PAD_BARREIRA: padrao_barreira(g, o, n); break;
         case PAD_ESPINGARDA: padrao_espingarda(g, o, n); break;
         case PAD_FACA:     padrao_faca(g, o, n);     break;
+
+        case PAD_PARRY:     padrao_parry(g, o, n);        break; 
         /* case PAD_X:     padrao_x(g, o, n);        break; */
         default:           break;
     }
@@ -329,12 +354,16 @@ static void exec_padrao(Game *g, Onda o, int n) {
 
 static Onda ondas[] = {
     // tipo        duracao  intervalo  escala
-    { PAD_CHUVA,    8.0f,    0.15f,     1.0f },   // chuva leve
-    { PAD_CHUVA,    8.0f,    0.40f,     2.0f },   // chuva pesada
-    { PAD_CIRCULO,  8.0f,    2.0f,      1.0f },   // circulo do jevil
-    { PAD_BARREIRA, 8.0f,    0.4f,      1.0f },   // barreiras do sans
+    { PAD_CHUVA,    15.0f,    0.15f,     1.0f },   // chuva leve
+    { PAD_PARRY,     0.1f,   99.0f,      1.0f },   // pong, 0 devolvida
+    { PAD_CIRCULO,  16.0f,    2.0f,      1.0f },   // circulo do jevil
+    { PAD_PARRY,     0.1f,   99.0f,      1.0f },   // pong, 1 devolvida
+    { PAD_BARREIRA, 12.0f,    0.4f,      1.0f },   // barreiras do sans
+    { PAD_PARRY,     0.1f,   99.0f,      1.0f },   // pong, 2 devolvida
     { PAD_ESPINGARDA, 8.0f,  0.8f,      1.0f },   // espingarda
-    { PAD_FACA,     8.0f,    0.6f,      1.0f },   // facas com aviso
+    { PAD_PARRY,     0.1f,   99.0f,      1.0f },   // pong, 3 devolvidas
+    { PAD_FACA,     15.0f,    0.6f,      1.0f },   // facas com aviso
+    { PAD_PARRY,     0.1f,   99.0f,      1.0f },   // pong, 4 devolvida
 };
 
 // quantidade de ondas = tamanho total / tamanho de cada
@@ -368,6 +397,7 @@ bool att_ondas(Game *g, float dt) {
         g->onda++;
         g->tempoOnda = 0;
         g->disparo = 0;
+        g->parry = 0;
     }
     return g->onda >= NUM_ONDAS;
 }

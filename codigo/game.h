@@ -39,6 +39,9 @@ typedef struct {
     bool recorta;         // true = so aparece dentro da caixa
     bool laser;           // true = linha de aviso roxa na direcao da acel enquanto
                           // espera ou recua (some quando comeca a ir pra frente)
+    bool rebativel;       // true = da pra dar parry
+    int rebates;          // vezes que o inimigo ainda devolve
+
     Texture2D *textura;   // NULL = quadrado branco
     float escala;         // multiplica tam do desenho
 
@@ -63,7 +66,15 @@ typedef struct {
     int onda;          // indice em ondas[] (ataques.c)
     float tempoOnda;   // segundos desde o inicio da onda atual
     int disparo;       // quantas vezes o padrao da onda atual ja disparou
+    bool parry;        // permitir parry?
+    int contador_inimigo; // balas de parry ja lancadas
+    float anim_inimigo;   // segs. de piscada restantes
+    float janela_parry;   // segs. de hitbox de parry ativa restantes
 } Game;
+
+#define LINHA_INIMIGO 170   // base dos olhos (y=130, raio 40)
+#define JANELA_PARRY 0.2f   // segs. de hitbox ativa por aperto
+#define MULT_REBATE 1.3f    // vel. quando o inimigo devolve
 
 // declaracoes: usei em entidades.c
 void spawn_bala(Game *g, Bala nova);
@@ -72,5 +83,9 @@ void desenha_entidades(Game *g);
 
 // declaracao: usei em ataques.c
 bool att_ondas(Game *g, float dt);
+
+// declaracoes: parry.c
+void att_parry(Game *g, bool apertou, float dt);
+void desenha_parry(Game *g);
 
 #endif
