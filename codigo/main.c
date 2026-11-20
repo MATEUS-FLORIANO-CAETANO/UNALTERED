@@ -209,7 +209,7 @@ static void atualiza_jogando(Game *g, float dt)
     if (att_ondas(g, dt)) g->estado = ESTADO_VITORIA;
 
     if (g->hp <= 0) g->estado = ESTADO_MORTE;
-    if (g->contador_inimigo == 5) g->estado = ESTADO_VITORIA;   // congela ate ter tela de vitoria
+    if (g->contador_inimigo == 6) g->estado = ESTADO_VITORIA;   // congela ate ter tela de vitoria
 }
 
 static void desenha_jogando(Game *g)
@@ -226,7 +226,7 @@ static void desenha_jogando(Game *g)
         DrawRectangleRec((Rectangle){ g->jogador.x - HITBOX_ALMA / 2.0f, g->jogador.y - HITBOX_ALMA / 2.0f,
                                       HITBOX_ALMA, HITBOX_ALMA }, Fade(WHITE, 0.8f));
 
-    DrawText(TextFormat("HP: %d; ESTADO: %d", g->hp, g->estado), 10, 50, 20, GREEN);
+    DrawText(TextFormat("HP: %d; ESTADO: %d", g->hp, g->estado), 10, 50, 20, WHITE);
 
     desenha_entidades(g);
     desenha_parry(g);

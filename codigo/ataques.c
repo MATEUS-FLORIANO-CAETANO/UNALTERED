@@ -309,7 +309,6 @@ static void padrao_faca(Game *g, Onda o, int n) {
 // ---------------------------------------------------------------------------------
 
 static void padrao_parry(Game *g, Onda o, int n) {
-    (void)o;
     if (n > 0) return;
     g->parry = true;
 
@@ -318,7 +317,7 @@ static void padrao_parry(Game *g, Onda o, int n) {
 
     spawn_bala(g, (Bala){
         .r         = { in.x, LINHA_INIMIGO + 5, in.width, h },   // logo abaixo dos olhos
-        .vel       = { 0, 90 },
+        .vel       = { 0, 220 * o.escala },
         .espera    = 0.5f,
         .oval      = true,
         .recorta   = false,
@@ -334,15 +333,15 @@ static void padrao_parry(Game *g, Onda o, int n) {
 // nova onda ou novo ataque: so uma linha aqui
 static Onda ondas[] = {
     // padrao             duracao  intervalo  escala
-    { padrao_chuva,       15.0f,   0.15f,     1.0f },   // chuva leve
+    //{ padrao_chuva,       15.0f,   0.15f,     1.0f },   // chuva leve
     { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 0 devolvida
-    { padrao_circulo,     16.0f,   2.0f,      1.0f },   // circulo do jevil
+    //{ padrao_circulo,     16.0f,   2.0f,      1.0f },   // circulo do jevil
     { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 1 devolvida
-    { padrao_barreira,    12.0f,   0.4f,      1.0f },   // barreiras do sans
+    //{ padrao_barreira,    12.0f,   0.4f,      1.0f },   // barreiras do sans
     { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 2 devolvida
-    { padrao_espingarda,   8.0f,   0.8f,      1.0f },   // espingarda
+    //{ padrao_espingarda,   8.0f,   0.8f,      1.0f },   // espingarda
     { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 3 devolvidas
-    { padrao_faca,        15.0f,   0.6f,      1.0f },   // facas com aviso
+    //{ padrao_faca,        15.0f,   0.6f,      1.0f },   // facas com aviso
     { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 4 devolvida
 };
 

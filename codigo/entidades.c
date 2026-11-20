@@ -1,5 +1,5 @@
 #include "game.h"
-#include "raymath.h"   // Vector2Normalize, Vector2DotProduct...
+#include "raymath.h"   // funcoes em vector2
 
 static void dano_player(Game *g) {
     PlaySound(dano);
@@ -94,7 +94,7 @@ void att_entidades(Game *g, float dt) {
             b->r.x += b->vel.x*dt;      // posicao
             b->r.y += b->vel.y*dt;
 
-            // quica: so inverte se estiver indo pra fora (bala que nasce fora da caixa entra normal)
+            // quica: so inverte se estiver indo pra fora
             if (b->quica) {
                 float esq = g->caixa.x + BORDA;
                 float dir = g->caixa.x + g->caixa.width - BORDA;
