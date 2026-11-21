@@ -81,6 +81,7 @@ typedef struct {
     int disparo;       // quantas vezes o padrao da onda atual ja disparou
     bool parry;        // permitir parry?
     int contador_inimigo; // balas de parry ja lancadas
+    bool rally_ganho;     // bala de parry acabou no inimigo? (false = errou, repete a onda)
     float anim_inimigo;   // segs. de piscada restantes
     float janela_parry;   // segs. de hitbox de parry ativa restantes
 } Game;

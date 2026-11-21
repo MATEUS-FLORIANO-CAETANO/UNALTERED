@@ -622,6 +622,7 @@ static void padrao_perseguidora(Game *g, Onda o, int n) {
 static void padrao_parry(Game *g, Onda o, int n) {
     if (n > 0) return;
     g->parry = true;
+    g->rally_ganho = false;
 
     Rectangle in = interior(g);
     float h = 15;
@@ -696,7 +697,9 @@ bool att_ondas(Game *g, float dt) {
     }
 
     if (t > atual.duracao && !tem_balas(g)) {
-        g->onda++;
+        // errou o pong: repete a mesma onda com os mesmos rebates
+        if (atual.padrao == padrao_parry && !g->rally_ganho) g->contador_inimigo--;
+        else g->onda++;
         g->tempoOnda = -PAUSA_ONDAS;   // negativo: espera antes do 1o disparo
         g->disparo = 0;
         g->parry = 0;

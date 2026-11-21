@@ -40,6 +40,7 @@ void att_parry(Game *g, bool apertou, float dt) {
             } else {
                 b->ativo = false;
                 g->anim_inimigo = 1.0f;
+                g->rally_ganho = true;
             }
         }
     }
