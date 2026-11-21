@@ -53,25 +53,16 @@ static void elipse_contorno(Rectangle r, Color cor) {
 static void desenha_bala(Bala *b) {
     Color cor = b->rebativel ? ORANGE : WHITE;
     if (b->textura != NULL) {
-<<<<<<< HEAD
-        if (b->invisivel) return;  
+        if (b->invisivel) return;
         // CLAUDE: rotacao de texturas
-        // dest posicionado no centro da hitbox + origem no centro da textura:
-        // fica centralizada e gira em volta do proprio meio (com angulo 0 = igual a antes)
+        // dest posicionado no centro da hitbox (+ sprite_desloc) + origem no centro da
+        // textura: fica centralizada e gira em volta do proprio meio (angulo 0 = sem giro)
         Texture2D t = *b->textura;
         float w = t.width * b->escala, h = t.height * b->escala;
-        Rectangle dest = { b->r.x + b->r.width / 2, b->r.y + b->r.height / 2, w, h };
+        Rectangle dest = { b->r.x + b->r.width  / 2 + b->sprite_desloc.x * b->escala,
+                           b->r.y + b->r.height / 2 + b->sprite_desloc.y * b->escala, w, h };
         DrawTexturePro(t, (Rectangle){ 0, 0, (float)t.width, (float)t.height },
                        dest, (Vector2){ w / 2, h / 2 }, b->angulo, cor);
-    
-    
-=======
-        float px = b->r.x + (b->r.width  - b->textura->width  * b->escala) / 2.0f
-                 + b->sprite_desloc.x * b->escala;
-        float py = b->r.y + (b->r.height - b->textura->height * b->escala) / 2.0f
-                 + b->sprite_desloc.y * b->escala;
-        DrawTextureEx(*b->textura, (Vector2){ px, py }, 0.0f, b->escala, cor);
->>>>>>> 8a01294 (padrao chuva + ajuste na hitbox)
     } else if (b->oval) {
         elipse(b->r, cor);
     } else {

@@ -129,14 +129,15 @@ static void padrao_chuva(Game *g, Onda o, int n) {
     float fator = GetRandomValue(110, 200) / 100.0f;
     float escala = o.escala * fator;
 
-    // o png e 32x32, a gota ocupa x 11..20, y 10..22. duas hitboxes:
-    // corpo: oval 10x8 nas linhas 15..22 (centro y = 19). o centro do png e 16,
-    //        entao o sprite e desenhado 3px acima do centro da hitbox
-    // cauda: retangulo 4x4 nas linhas 11..14, x 14..17 (a pontinha da linha 10 fica de fora)
-    float w = 10 * escala;
-    float h = 8 * escala;
-    const Vector2 DESLOC = { 0, -3.0f };
-    Rectangle cauda = { 3 * escala, -4 * escala, 4 * escala, 4 * escala };  // relativo ao corpo
+    // chuva-fogo.png e 16x16, a gota ocupa x 4..11, y 0..9. duas hitboxes:
+    // corpo: oval 8x6 nas linhas 4..9 (centro y = 7). o centro do png e 8,
+    //        entao o sprite e desenhado 1px abaixo do centro da hitbox
+    // chama: retangulo 3x3 em x 5..7, linhas 1..3 (a linguinha da direita e a
+    //        pontinha da linha 0 ficam de fora)
+    float w = 8 * escala;
+    float h = 6 * escala;
+    const Vector2 DESLOC = { 0, 1.0f };
+    Rectangle cauda = { 1 * escala, -3 * escala, 3 * escala, 3 * escala };  // relativo ao corpo
 
     // x aleatorio dentro da caixa, sem passar da parede direita
     Rectangle in = interior(g);
@@ -354,31 +355,17 @@ static void padrao_parry(Game *g, Onda o, int n) {
 
 // nova onda ou novo ataque: so uma linha aqui
 static Onda ondas[] = {
-<<<<<<< HEAD
-    // padrao             duracao  intervalo  escala
-    { padrao_chuva,       15.0f,   0.15f,     1.0f },   // chuva leve
-    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 0 devolvida
-    { padrao_circulo,     16.0f,   2.0f,      1.0f },   // circulo do jevil
-    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 1 devolvida
-    { padrao_barreira,    12.0f,   0.4f,      1.0f },   // barreiras do sans
-    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 2 devolvida
-    { padrao_espingarda,   8.0f,   0.8f,      1.0f },   // espingarda
-    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 3 devolvidas
-    { padrao_faca,        15.0f,   0.6f,      1.0f },   // facas com aviso
-    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 4 devolvida
-=======
-    // padrao             duracao  intervalo  escala  atraso
+    // padrao             duracao  intervalo  escala  atraso (opcional)
     { padrao_chuva,       15.0f,   0.18f,     1.0f,   0.8f },   // chuva leve
- //   { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 0 devolvida
-   // { padrao_circulo,     16.0f,   2.0f,      1.0f },   // circulo do jevil
-  //  { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 1 devolvida
-  //  { padrao_barreira,    12.0f,   0.4f,      1.0f },   // barreiras do sans
-   // { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 2 devolvida
-   // { padrao_espingarda,   8.0f,   0.8f,      1.0f },   // espingarda
-   // { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 3 devolvidas
-  //  { padrao_faca,        15.0f,   0.6f,      1.0f },   // facas com aviso
-   // { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 4 devolvida
->>>>>>> 8a01294 (padrao chuva + ajuste na hitbox)
+    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 0 devolvida
+    { padrao_circulo,     16.0f,   2.0f,      1.0f,   0.0f },   // circulo do jevil
+    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 1 devolvida
+    { padrao_barreira,    12.0f,   0.4f,      1.0f,   0.0f },   // barreiras do sans
+    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 2 devolvida
+    { padrao_espingarda,   8.0f,   0.8f,      1.0f,   0.0f },   // espingarda
+    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 3 devolvidas
+    { padrao_faca,        15.0f,   0.6f,      1.0f,   0.0f },   // facas com aviso
+    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 4 devolvida
 };
 
 // quantidade de ondas = tamanho total / tamanho de cada
