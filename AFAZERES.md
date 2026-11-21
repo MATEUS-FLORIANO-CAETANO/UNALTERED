@@ -11,7 +11,7 @@
 
 6. Texturas em balas
 
-7. Mesclar codigo do olho, com texturas: https://www.raylib.com/examples/shapes/loader.html?name=shapes_following_eyes
+7. Mesclar codigo do olho, com texturas: https://www.raylib.com/examples/shapes/loader.html?name=shapes_following_eyes (OK)
 
 8. possivelmente reimplementar ataques angulados como linha ao inves de quadrados enfileirados
 

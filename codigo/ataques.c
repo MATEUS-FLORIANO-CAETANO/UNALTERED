@@ -59,7 +59,7 @@
  *       .segue    = 0.6f,                        // s acompanhando a alma antes da espera
  *       .vida     = 2.0f,                        // s ate sumir (0 = nunca)
  *       .persegue = 2.0f,                        // rad/s girando a vel pra alma
- *       .laser    = true,                        // aviso roxo na direcao da ACEL (nao da vel)
+ *       .laser    = true,                        // aviso verde na direcao da ACEL (nao da vel)
  *       .quica    = true,                        // inverte vel.x nas paredes laterais da caixa
  *       .oval     = true,                        // desenha e colide como elipse
  *       .rebativel = true, .rebates = 2,         // bala de parry (ver padrao_parry)
@@ -114,6 +114,13 @@ static Vector2 rumo(Vector2 de, Vector2 para, float modulo) {
     return Vector2Scale(Vector2Normalize(Vector2Subtract(para, de)), modulo);
 }
 
+// textura da gota de fogo, carregada uma vez so e usada por todas as chuvas
+static Texture2D *gota(void) {
+    static Texture2D t = { 0 };
+    if (t.id == 0) t = LoadTexture("assets/chuva-fogo.png");
+    return &t;
+}
+
 
 // ---------------------------------------------------------------------------------
 // PADROES
@@ -121,9 +128,7 @@ static Vector2 rumo(Vector2 de, Vector2 para, float modulo) {
 // chuva: balas nascem acima da caixa em x aleatorio e caem reto pra baixo
 static void padrao_chuva(Game *g, Onda o, int n) {
     
-    (void)n;   
-    static Texture2D lagrima = { 0 };   // static: carrega a textura uma vez so
-    if (lagrima.id == 0) lagrima = LoadTexture("assets/chuva-fogo.png");
+    (void)n;
 
     // tamanho aleatorio: +10% a +100%.
     float fator = GetRandomValue(110, 200) / 100.0f;
@@ -149,9 +154,131 @@ static void padrao_chuva(Game *g, Onda o, int n) {
         .oval    = true,
         .vel     = { 0, 120 },
         .recorta = true,                          // so aparece qnd entra
-        .textura = &lagrima,
+        .textura = gota(),
         .escala  = escala,
         .sprite_desloc = DESLOC,
+    });
+}
+
+// ---------------------------------------------------------------------------------
+
+// chuva lateral: igual a chuva, mas nasce fora da parede esquerda ou direita em y
+// aleatorio e anda reto pro lado. a gota e desenhada girada 90 graus, entao a
+// hitbox vira 6x8 (em pe) e a chama vai pra tras da gota.
+static void gota_lateral(Game *g, Onda o, bool da_esquerda) {
+    float fator = GetRandomValue(110, 200) / 100.0f;
+    float escala = o.escala * fator;
+
+    // corpo: oval 8x6 deitado vira 6x8 em pe
+    float w = 6 * escala;
+    float h = 8 * escala;
+
+    // girando o png, o deslocamento do sprite e a chama giram junto:
+    // indo pra direita (-90 graus) a chama fica atras (esquerda) e um pouco abaixo;
+    // indo pra esquerda (+90 graus) fica atras (direita) e um pouco acima
+    Vector2 desloc;
+    Rectangle cauda;
+    float angulo;
+    if (da_esquerda) {
+        angulo = -90;
+        desloc = (Vector2){ 1.0f, 0 };
+        cauda  = (Rectangle){ -3 * escala, 4 * escala, 3 * escala, 3 * escala };
+    } else {
+        angulo = 90;
+        desloc = (Vector2){ -1.0f, 0 };
+        cauda  = (Rectangle){ 6 * escala, 1 * escala, 3 * escala, 3 * escala };
+    }
+
+    // y aleatorio dentro da caixa, sem passar do chao
+    Rectangle in = interior(g);
+    float y = (float)GetRandomValue((int)in.y, (int)(in.y + in.height - h));
+    float x = da_esquerda ? g->caixa.x - w : g->caixa.x + g->caixa.width;
+
+    spawn_bala(g, (Bala){
+        .r       = { x, y, w, h },                // logo fora da parede
+        .extra   = cauda,
+        .oval    = true,
+        .vel     = { da_esquerda ? 120.0f : -120.0f, 0 },
+        .recorta = true,
+        .textura = gota(),
+        .escala  = escala,
+        .angulo  = angulo,
+        .sprite_desloc = desloc,
+    });
+}
+
+// sorteia um lado no comeco da onda e a chuva toda vem dele
+static void padrao_chuva_lado(Game *g, Onda o, int n) {
+    static bool esq;
+    if (n == 0) esq = GetRandomValue(0, 1);
+    gota_lateral(g, o, esq);
+}
+
+// cada gota vem de um lado: esquerda, direita, esquerda...
+static void padrao_chuva_alterna(Game *g, Onda o, int n) {
+    gota_lateral(g, o, n % 2 == 0);
+}
+
+// ---------------------------------------------------------------------------------
+
+// chuva com aviso: uma fileira inteira de gotas nasce acima da caixa, parada,
+// mostrando o laser de cada uma. depois cai tudo junto. a folga e onde nao tem laser.
+static void padrao_chuva_laser(Game *g, Onda o, int n) {
+    (void)n;
+    const float AVISO = 0.9f;               // s parada mostrando os lasers
+    const float ACEL  = 500.0f;             // px/s^2 pra baixo
+    const float FOLGA = 2.0f * TAM_ALMA;    // largura minima do buraco
+
+    float escala = o.escala;
+    float w = 8 * escala;
+    float h = 6 * escala;
+    Rectangle cauda = { 1 * escala, -3 * escala, 3 * escala, 3 * escala };
+
+    // quantas gotas cabem lado a lado; a sobra fica dividida nas duas paredes
+    Rectangle in = interior(g);
+    int colunas = (int)(in.width / w);
+    float x0 = in.x + (in.width - colunas * w) / 2;
+
+    // buraco: 'vazias' colunas seguidas sem gota, comecando numa coluna sorteada
+    int vazias = (int)ceilf(FOLGA / w);
+    int inicio = GetRandomValue(0, colunas - vazias);
+
+    for (int i = 0; i < colunas; i++) {
+        if (i >= inicio && i < inicio + vazias) continue;
+        spawn_bala(g, (Bala){
+            .r       = { x0 + i * w, g->caixa.y - h, w, h },
+            .extra   = cauda,
+            .oval    = true,
+            .acel    = { 0, ACEL },               // laser aponta pra acel: pra baixo
+            .espera  = AVISO,
+            .laser   = true,
+            .recorta = true,
+            .textura = gota(),
+            .escala  = escala,
+            .sprite_desloc = { 0, 1.0f },
+        });
+    }
+}
+
+// ---------------------------------------------------------------------------------
+
+// golpe quicando: cai do ceu devagar pra baixo, mas rapido pro lado,
+// e inverte o lado ao bater nas paredes da caixa
+static void padrao_quica(Game *g, Onda o, int n) {
+    const float VX  = 90.0f;   // px/s pro lado
+    const float VY  = 40.0f;    // px/s pra baixo
+    const float TAM = 8 * o.escala;
+
+    Rectangle in = interior(g);
+    float x = (float)GetRandomValue((int)in.x, (int)(in.x + in.width - TAM));
+    float dir = (n % 2 == 0) ? 1.0f : -1.0f;   // alterna quem comeca indo pra direita
+
+    spawn_bala(g, (Bala){
+        .r       = { x, g->caixa.y - TAM, TAM, TAM },
+        .vel     = { dir * VX, VY },
+        .quica   = true,
+        .recorta = true,
+        .escala  = o.escala,
     });
 }
 
@@ -188,6 +315,45 @@ static void padrao_circulo(Game *g, Onda o, int n) {
             .espera = ordem * ATRASO,
             .escala = o.escala,
             // .textura = &jevil,
+        });
+    }
+}
+
+// ---------------------------------------------------------------------------------
+
+// explosao: N balas empilhadas num ponto (parece uma bala so, e o aviso),
+// depois saem todas pra fora em anel, acelerando.
+// o ponto e sorteado dentro da caixa longe da alma: no centro fixo, a alma
+// parada no meio levaria dano no instante em que as balas nascem.
+static void padrao_explosao(Game *g, Onda o, int n) {
+    const int   N     = 12;
+    const float VEL   = 30.0f;    // px/s logo que sai
+    const float ACEL  = 220.0f;   // px/s^2 pra fora
+    const float AVISO = 0.7f;     // s empilhadas antes de explodir
+    const float LONGE = 50.0f;    // distancia minima da alma
+    const float TAM   = 6 * o.escala;
+
+    // sorteia ate achar um ponto longe da alma (10 tentativas bastam numa caixa desse tamanho)
+    Rectangle in = interior(g);
+    Vector2 c = centro(in);
+    for (int t = 0; t < 10; t++) {
+        c = (Vector2){ (float)GetRandomValue((int)(in.x + TAM), (int)(in.x + in.width - TAM)),
+                       (float)GetRandomValue((int)(in.y + TAM), (int)(in.y + in.height - TAM)) };
+        if (Vector2Distance(c, g->jogador) >= LONGE) break;
+    }
+
+    // como no circulo: disparos impares giram meio passo, pra mudar onde ficam os buracos
+    float giro = (n % 2) * (PI / N);
+
+    for (int k = 0; k < N; k++) {
+        Vector2 dir = no_circulo((Vector2){ 0, 0 }, 1, giro + k * 2 * PI / N);   // unitario
+        spawn_bala(g, (Bala){
+            .r       = ret_centrado(c, TAM, TAM),
+            .vel     = Vector2Scale(dir, VEL),
+            .acel    = Vector2Scale(dir, ACEL),
+            .espera  = AVISO,
+            .recorta = true,
+            .escala  = o.escala,
         });
     }
 }
@@ -283,25 +449,17 @@ static void padrao_espingarda(Game *g, Onda o, int n) {
 // ---------------------------------------------------------------------------------
 
 // faca nasce num ponto aleatorio em volta da caixa apontada pra alma,
-// mostra a linha de aviso roxa, recua um pouco (como no circulo) e dispara muito rapido.
+// mostra a linha de aviso verde, recua um pouco (como no circulo) e dispara muito rapido.
 // a hitbox e uma fileira de M quadradinhos com o mesmo movimento, formando a lamina
 // (Rectangle nao gira).
-static void padrao_faca(Game *g, Onda o, int n) {
-    (void)n;
-
-    const float RAIO  = 120.0f;   // distancia do centro da caixa onde a faca nasce
-    const float SEGUE = 0.6f;     // s acompanhando a alma (mesma distancia, mesma mira)
-    const float AVISO = 0.0f;     // s congelada antes de disparar
+// uma faca: ponta = onde nasce a ponta da lamina, dir = unitario pra onde ela vai.
+// usada por padrao_faca, padrao_facas_seguidas e padrao_facas_cruz
+static void spawn_faca(Game *g, Onda o, Vector2 ponta, Vector2 dir, float segue, float espera) {
     const float ACEL  = 55000.0f;  // px/s^2
     const float RECUO = 250.0f;   // px/s
     const int   M     = 10;       // quadradinhos na lamina
     const float PASSO = 4 * o.escala;   // distancia entre eles (comprimento ~ M*PASSO)
     const float TAM   = 5 * o.escala;   // lado de cada quadradinho
-
-    Vector2 c = centro(g->caixa);
-    float ang = GetRandomValue(0, 359) * DEG2RAD;
-    Vector2 ponta = no_circulo(c, RAIO, ang);
-    Vector2 dir = rumo(ponta, g->jogador, 1);   // unitario, mirando na alma
 
     // CLAUDE: quadrados escondidos. com sprite, a faca inteira e desenhada 1x so no
     // quadradinho do meio da lamina, girada pra mirar na alma; os outros ficam
@@ -320,13 +478,175 @@ static void padrao_faca(Game *g, Onda o, int n) {
             .r        = ret_centrado(pos, TAM, TAM),
             .vel      = Vector2Scale(dir, -RECUO),   // recua antes de ir
             .acel     = Vector2Scale(dir, ACEL),
-            .segue    = SEGUE,
-            .espera   = AVISO,
+            .segue    = segue,
+            .espera   = espera,
             .persiste = true,                        // a lamina nao se desmancha
             .laser    = (k == 0),                    // so a ponta desenha a linha
             .escala   = o.escala,
         });
     }
+}
+
+static void padrao_faca(Game *g, Onda o, int n) {
+    (void)n;
+
+    const float RAIO  = 120.0f;   // distancia do centro da caixa onde a faca nasce
+    const float SEGUE = 0.6f;     // s acompanhando a alma (mesma distancia, mesma mira)
+    const float AVISO = 0.0f;     // s congelada antes de disparar
+
+    Vector2 c = centro(g->caixa);
+    float ang = GetRandomValue(0, 359) * DEG2RAD;
+    Vector2 ponta = no_circulo(c, RAIO, ang);
+    Vector2 dir = rumo(ponta, g->jogador, 1);   // unitario, mirando na alma
+
+    spawn_faca(g, o, ponta, dir, SEGUE, AVISO);
+}
+
+// ---------------------------------------------------------------------------------
+
+// facas em sequencia, cada uma acompanhando a alma por um tempo diferente
+// (1.0, 1.3, 1.6, 1.0, 1.3...). so tem uma faca na tela por vez: a proxima nasce
+// logo depois da anterior disparar, entao nunca tem dois lasers ao mesmo tempo
+// e o ritmo muda a cada faca.
+// o.intervalo aqui e so o 'tique' (bem pequeno): a funcao conta o tempo sozinha
+// e so cria a faca quando a anterior ja foi.
+// nascem em volta da ALMA (nao da caixa), pra que o 'segue' nunca leve a lamina
+// pra fora da tela (bala fora da tela e apagada)
+static void padrao_facas_seguidas(Game *g, Onda o, int n) {
+    const float RAIO    = 100.0f;   // distancia da alma
+    const float SEGUES[] = { 1.0f, 1.3f, 1.6f };   // s acompanhando, em ordem
+    const int   K       = sizeof(SEGUES) / sizeof(SEGUES[0]);
+    const float FOLGA   = 0.15f;    // s entre uma faca disparar e a proxima nascer
+
+    static float falta;   // s ate a proxima faca nascer
+    static int   i;       // qual SEGUE usar
+    if (n == 0) { falta = 0; i = 0; }
+
+    falta -= o.intervalo;
+    if (falta > 0) return;
+
+    float segue = SEGUES[i % K];
+    i++;
+    falta = segue + FOLGA;
+
+    float ang = GetRandomValue(0, 359) * DEG2RAD;
+    Vector2 ponta = no_circulo(g->jogador, RAIO, ang);
+    spawn_faca(g, o, ponta, rumo(ponta, g->jogador, 1), segue, 0);
+}
+
+// ---------------------------------------------------------------------------------
+
+// facas em cruz: uma horizontal e uma vertical, na mesma distancia da alma.
+// acompanham juntas, congelam juntas e fecham juntas no mesmo ponto.
+// DIST 100: de baixo, com a alma no chao, a lamina inteira ainda cabe na tela
+static void padrao_facas_cruz(Game *g, Onda o, int n) {
+    (void)n;
+    const float DIST  = 100.0f;   // distancia da ponta ate a alma
+    const float SEGUE = 0.8f;     // s acompanhando
+    const float AVISO = 0.35f;    // s congeladas antes de fechar
+
+    float lx = GetRandomValue(0, 1) ? 1.0f : -1.0f;   // +1 = horizontal vem da direita
+    float ly = GetRandomValue(0, 1) ? 1.0f : -1.0f;   // +1 = vertical vem de baixo
+    Vector2 p = g->jogador;
+
+    spawn_faca(g, o, (Vector2){ p.x + lx * DIST, p.y }, (Vector2){ -lx, 0 }, SEGUE, AVISO);
+    spawn_faca(g, o, (Vector2){ p.x, p.y + ly * DIST }, (Vector2){ 0, -ly }, SEGUE, AVISO);
+}
+
+// ---------------------------------------------------------------------------------
+
+// gaiola: circulo grande com centro num ponto aleatorio da arena fecha ate o raio
+// ficar ~a largura da alma e some. o lugar seguro e o centro (ou uma fresta).
+// o raio e so o suficiente pra comecar com a caixa inteira dentro do circulo,
+// assim nenhuma bala nasce longe demais (fora da tela ela seria apagada).
+// sem recorte: o circulo inteiro aparece fora da caixa, e fugir dele ja leva pro centro.
+static void padrao_gaiola(Game *g, Onda o, int n) {
+    (void)n;
+    const int   N      = 40;                // balas no circulo
+    const float FINAL  = TAM_ALMA;          // raio em que some
+    const float VEL    = 80.0f;             // px/s fechando
+    const float TAM    = 6 * o.escala;
+
+    // centro sorteado dentro da arena, com folga pra alma caber em volta dele
+    Rectangle in = interior(g);
+    Vector2 c = { (float)GetRandomValue((int)(in.x + TAM_ALMA), (int)(in.x + in.width  - TAM_ALMA)),
+                  (float)GetRandomValue((int)(in.y + TAM_ALMA), (int)(in.y + in.height - TAM_ALMA)) };
+
+    // raio: distancia ate o canto da arena mais longe do centro, + uma bala de folga
+    float dx = fmaxf(c.x - in.x, in.x + in.width  - c.x);
+    float dy = fmaxf(c.y - in.y, in.y + in.height - c.y);
+    float raio = sqrtf(dx * dx + dy * dy) + TAM;
+
+    // vida: tempo pra andar de raio ate FINAL
+    float vida = ((raio - FINAL) / VEL) - 0.1f;
+
+    for (int k = 0; k < N; k++) {
+        Vector2 pos = no_circulo(c, raio, k * 2 * PI / N);
+        spawn_bala(g, (Bala){
+            .r        = ret_centrado(pos, TAM, TAM),
+            .vel      = rumo(pos, c, VEL),
+            .vida     = vida,
+            .persiste = true,
+            .escala   = o.escala,
+        });
+    }
+}
+
+// ---------------------------------------------------------------------------------
+
+// enxame: muitas balas pequenas vindo de todo lado, cada uma curvando de leve
+// pra alma. vida limitada pra nao ficarem orbitando pra sempre
+static void padrao_enxame(Game *g, Onda o, int n) {
+    (void)n;
+    const float RAIO     = 130.0f;   // distancia do centro da caixa onde nascem
+    const float VEL      = 80.0f;    // px/s
+    const float PERSEGUE = 0.7f;     // rad/s: curva fraca
+    const float VIDA     = 4.0f;     // s
+    const float TAM      = 4 * o.escala;
+
+    float ang = GetRandomValue(0, 359) * DEG2RAD;
+    Vector2 pos = no_circulo(centro(g->caixa), RAIO, ang);
+
+    spawn_bala(g, (Bala){
+        .r        = ret_centrado(pos, TAM, TAM),
+        .vel      = rumo(pos, g->jogador, VEL),
+        .persegue = PERSEGUE,
+        .vida     = VIDA,
+        .escala   = o.escala,
+    });
+}
+
+// ---------------------------------------------------------------------------------
+
+// perseguidora: bala que corre atras da alma, quase tao rapida quanto ela e
+// virando forte. parado, leva dano. a cada disparo entra mais uma, no canto
+// mais longe da alma, e todas somem juntas no fim da onda
+static void padrao_perseguidora(Game *g, Onda o, int n) {
+    const float VEL   = 105.0f;   // px/s (alma anda 120 reto, ~170 na diagonal)
+    const float GIRO  = 5.0f;     // rad/s: curva forte
+    const float AVISO = 0.8f;     // s parada antes de comecar a correr
+    const float TAM   = 8 * o.escala;
+
+    // vida = o que falta da onda. o ultimo disparo cai bem no fim e daria
+    // vida ~0, que significa "nunca some", entao nem nasce
+    float vida = o.duracao - n * o.intervalo;
+    if (vida < 1.0f) return;
+
+    Rectangle in = interior(g);
+    Vector2 c = centro(in);
+    Vector2 pos = { g->jogador.x < c.x ? in.x + in.width - TAM / 2 : in.x + TAM / 2,
+                    g->jogador.y < c.y ? in.y + in.height - TAM / 2 : in.y + TAM / 2 };
+
+    spawn_bala(g, (Bala){
+        .r        = ret_centrado(pos, TAM, TAM),
+        .vel      = rumo(pos, g->jogador, VEL),   // persegue precisa de vel != 0
+        .persegue = GIRO,
+        .espera   = AVISO,
+        .vida     = vida,
+        .persiste = true,
+        .recorta  = true,
+        .escala   = o.escala,
+    });
 }
 
 // ---------------------------------------------------------------------------------
@@ -355,17 +675,26 @@ static void padrao_parry(Game *g, Onda o, int n) {
 
 // nova onda ou novo ataque: so uma linha aqui
 static Onda ondas[] = {
-    // padrao             duracao  intervalo  escala  atraso (opcional)
-    { padrao_chuva,       15.0f,   0.18f,     1.0f,   0.8f },   // chuva leve
-    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 0 devolvida
-    { padrao_circulo,     16.0f,   2.0f,      1.0f,   0.0f },   // circulo do jevil
-    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 1 devolvida
-    { padrao_barreira,    12.0f,   0.4f,      1.0f,   0.0f },   // barreiras do sans
-    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 2 devolvida
-    { padrao_espingarda,   8.0f,   0.8f,      1.0f,   0.0f },   // espingarda
-    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 3 devolvidas
-    { padrao_faca,        15.0f,   0.6f,      1.0f,   0.0f },   // facas com aviso
-    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 4 devolvida
+    // // padrao             duracao  intervalo  escala  atraso (opcional)
+    // { padrao_chuva,          15.0f,   0.18f,     1.0f,   0.8f },   // chuva leve
+    // { padrao_chuva_lado,     10.0f,   0.2f,      1.0f,   0.0f },   // chuva lateral, lado sorteado
+    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 0 devolvida
+    // { padrao_circulo,        16.0f,   2.0f,      1.0f,   0.0f },   // circulo do jevil
+    // { padrao_explosao,       10.0f,   1.2f,      1.0f,   0.0f },   // explosao
+    // { padrao_gaiola,         11.0f,   3.6f,      1.0f,   0.0f },   // gaiola fechando num ponto
+    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 1 devolvida
+    // { padrao_barreira,       12.0f,   0.4f,      1.0f,   0.0f },   // barreiras do sans
+    // { padrao_chuva_laser,    10.0f,   1.8f,      1.0f,   0.0f },   // chuva com laser e folga
+    // { padrao_chuva_alterna,  10.0f,   0.2f,      1.0f,   0.0f },   // chuva lateral alternando
+    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 2 devolvida
+    // { padrao_espingarda,      8.0f,   0.8f,      1.0f,   0.0f },   // espingarda
+    // { padrao_quica,          10.0f,   0.5f,      1.0f,   0.0f },   // golpes quicando
+    // { padrao_enxame,         10.0f,   0.36f,     1.0f,   0.0f },   // enxame
+    // { padrao_perseguidora,    9.0f,   3.0f,      1.0f,   0.0f },   // perseguidoras (3)
+    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 3 devolvidas
+    // { padrao_faca,           15.0f,   0.6f,      1.0f,   0.0f },   // facas com aviso
+    // { padrao_facas_cruz,     10.0f,   1.6f,      1.0f,   0.0f },   // facas em cruz
+    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 4 devolvida
 };
 
 // quantidade de ondas = tamanho total / tamanho de cada

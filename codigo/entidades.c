@@ -169,7 +169,7 @@ void desenha_entidades(Game *g) {
 
         Vector2 ini = { b->r.x + b->r.width / 2, b->r.y + b->r.height / 2 };
         Vector2 fim = Vector2Add(ini, Vector2Scale(Vector2Normalize(b->acel), 1000));
-        DrawLineEx(ini, fim, 1.5f, PURPLE);
+        DrawLineEx(ini, fim, 1.5f, GREEN);
     }
 
     // balas sem recorte: aparecem em qualquer lugar da tela

@@ -39,7 +39,7 @@ typedef struct {
 
     bool persiste;        // true = nao some ao acertar
     bool recorta;         // true = so aparece dentro da caixa
-    bool laser;           // true = linha de aviso roxa na direcao da acel enquanto
+    bool laser;           // true = linha de aviso verde na direcao da acel enquanto
                           // espera ou recua (some quando comeca a ir pra frente)
     bool rebativel;       // true = da pra dar parry
     int rebates;          // vezes que o inimigo ainda devolve
