@@ -26,6 +26,8 @@ typedef enum { ESTADO_JOGANDO, ESTADO_MORTE, ESTADO_VITORIA } estadoGame;
 // campos que o ataque preenche. o que nao for preenchido vale 0 / false / NULL.
 typedef struct {
     Rectangle r;          // hitbox: canto superior esquerdo + largura/altura
+    Rectangle extra;      // 2a hitbox (sempre retangulo), x/y relativos ao canto de r.
+                          // largura 0 = nao tem. ex: cauda fina da gota
     Vector2 vel;          // 
     Vector2 acel;         //  somada na vel todo frame
     float segue;          // segs. acompanhando a alma, antes da espera
@@ -46,11 +48,16 @@ typedef struct {
 
     Texture2D *textura;   // NULL = quadrado branco
     float escala;         // multiplica tam do desenho
+<<<<<<< HEAD
     
     float angulo;         // graus. gira SO o desenho da textura em volta do centro da
                           // hitbox (a hitbox continua reta). desenhe a textura apontando pra direita
     bool invisivel;       // CLAUDE: com textura, nao desenha (mas colide). sem textura, ignorado.
                           // ex: so 1 quadradinho da lamina da faca desenha o sprite inteiro
+=======
+    Vector2 sprite_desloc;// px do png (x escala) que o desenho anda em relacao ao centro
+                          // da hitbox. ex: {0,-3} = sprite 3px acima (hitbox mais embaixo)
+>>>>>>> 8a01294 (padrao chuva + ajuste na hitbox)
 
     bool ativo;           
     Vector2 desloc;       // distancia ate a alma guardada no spawn (usada por 'segue')
@@ -89,6 +96,7 @@ typedef struct {
 void spawn_bala(Game *g, Bala nova);
 void att_entidades(Game *g, float dt);
 void desenha_entidades(Game *g);
+void desenha_hitboxes(Game *g);   // debug: contorno das hitboxes (modo foco)
 
 // declaracao: usei em ataques.c
 bool att_ondas(Game *g, float dt);
