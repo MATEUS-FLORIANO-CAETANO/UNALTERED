@@ -48,6 +48,7 @@ static void SetActionsCursor(void);         // define setinhas
 // um par atualiza/desenha por estado
 static void atualiza_jogando(Game *g, float dt);
 static void desenha_jogando(Game *g);
+static void desenha_fim(Game *g, const char *titulo, Color cor);
 
 static Texture2D alma;
 
@@ -139,8 +140,8 @@ int main(void)
             switch (g.estado)
             {
             case ESTADO_JOGANDO: desenha_jogando(&g); break;
-            case ESTADO_MORTE:   desenha_jogando(&g); break;   // congelado (a implementar)
-            case ESTADO_VITORIA: desenha_jogando(&g); break;   // congelado (a implementar)
+            case ESTADO_MORTE:   desenha_fim(&g, "Você Morreu!", RED); break;
+            case ESTADO_VITORIA: desenha_fim(&g, "Você Venceu!", GREEN); break;
             }
 
         EndTextureMode();
@@ -237,6 +238,32 @@ static void desenha_jogando(Game *g)
     desenha_parry(g);
 
     desenha_olhos(g);   // olhos.c
+}
+
+// tela de morte/vitoria
+static void desenha_fim(Game *g, const char *titulo, Color cor)
+{
+    DrawTextureV(alma, (Vector2){ g->jogador.x - alma.width / 2.0f,
+                                  g->jogador.y - alma.height / 2.0f }, WHITE);
+
+    int cx = VIRTUAL_W / 2;
+    int y  = 130 - 20;
+
+    DrawText(titulo, cx - MeasureText(titulo, 40) / 2, y, 40, cor);
+    y += 50;
+
+    int ondas = g->onda;
+    int danoRecebido = g->cont_dano;
+    const char *stats[] = {
+        TextFormat("Ondas: %d", ondas),
+        TextFormat("Dano Recebido: %d", danoRecebido),
+        TextFormat("Pontuação: %d", ondas * 30 - danoRecebido),
+    };
+    for (int i = 0; i < 3; i++) {
+        DrawText(stats[i], cx - MeasureText(stats[i], 20) / 2, y, 20, WHITE);
+        y += 25;
+    }
+                            
 }
 
 // verifica botao pressionado
