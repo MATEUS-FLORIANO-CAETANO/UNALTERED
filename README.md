@@ -27,3 +27,29 @@ decide quando e onde as coisas nascem, por meio de funções que chamam spawn_ba
 também gerencia as sequencias de ataques, com duração e intervalo entre cada bala.
 NÃO move balas e nem verifica colisão, isso é trabalho do entidades.c
 
+
+## Como compilar
+
+### NixOS
+```sh
+cd build && nix-shell --run make && ./unaltered
+```
+
+### Ubuntu / Debian (sem Nix)
+raylib não está no apt, então compile do fonte uma vez:
+```sh
+sudo apt install build-essential git libasound2-dev libx11-dev libxrandr-dev \
+  libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
+git clone --depth 1 --branch 5.5 https://github.com/raysan5/raylib.git
+cd raylib/src && make PLATFORM=PLATFORM_DESKTOP
+# sem sudo: copia pra ~/.local
+mkdir -p ~/.local/lib ~/.local/include
+cp libraylib.a ~/.local/lib/ && cp raylib.h raymath.h rlgl.h ~/.local/include/
+# (ou, com root: sudo make install, que vai pra /usr/local)
+```
+Depois:
+```sh
+cd build && make && ./unaltered
+```
+O Makefile usa `pkg-config` se achar raylib; senão procura em `~/.local` e depois `/usr/local`
+(mude com `make RAYLIB_PREFIX=/outro/caminho`).
