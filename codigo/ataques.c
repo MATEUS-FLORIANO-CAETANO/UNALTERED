@@ -534,25 +534,29 @@ static void padrao_gaiola(Game *g, Onda o, int n) {
     const float FINAL  = TAM_ALMA;          // raio em que some
     const float VEL    = 80.0f;             // px/s fechando
     const float TAM    = 6 * o.escala;
+    const float ESPERA = 0.4f;              // segs. parada antes de fechar
 
     // centro sorteado dentro da arena, com folga pra alma caber em volta dele
     Rectangle in = interior(g);
     Vector2 c = { (float)GetRandomValue((int)(in.x + TAM_ALMA), (int)(in.x + in.width  - TAM_ALMA)),
                   (float)GetRandomValue((int)(in.y + TAM_ALMA), (int)(in.y + in.height - TAM_ALMA)) };
 
-    // raio: distancia ate o canto da arena mais longe do centro, + uma bala de folga
-    float dx = fmaxf(c.x - in.x, in.x + in.width  - c.x);
-    float dy = fmaxf(c.y - in.y, in.y + in.height - c.y);
-    float raio = sqrtf(dx * dx + dy * dy) + TAM;
+    // raio: distancia ate o canto da caixa (com borda) mais longe do centro,
+    // + meia diagonal da bala, assim nenhuma bala nasce encostando na caixa
+    Rectangle cx = g->caixa;
+    float dx = fmaxf(c.x - cx.x, cx.x + cx.width  - c.x);
+    float dy = fmaxf(c.y - cx.y, cx.y + cx.height - c.y);
+    float raio = sqrtf(dx * dx + dy * dy) + TAM * 0.75f;
 
-    // vida: tempo pra andar de raio ate FINAL
-    float vida = ((raio - FINAL) / VEL) - 0.1f;
+    // vida: espera + tempo pra andar de raio ate FINAL (vida conta durante a espera)
+    float vida = ESPERA + ((raio - FINAL) / VEL) - 0.1f;
 
     for (int k = 0; k < N; k++) {
         Vector2 pos = no_circulo(c, raio, k * 2 * PI / N);
         spawn_bala(g, (Bala){
             .r        = ret_centrado(pos, TAM, TAM),
             .vel      = rumo(pos, c, VEL),
+            .espera   = ESPERA,
             .vida     = vida,
             .persiste = true,
             .escala   = o.escala,
@@ -645,11 +649,11 @@ static void padrao_parry(Game *g, Onda o, int n) {
 // nova onda ou novo ataque: so uma linha aqui
 static Onda ondas[] = {
     // padrao                duracao  intervalo  escala  atraso (opcional)
-    { padrao_chuva,          15.0f,   0.18f,     1.0f,   0.8f },   // chuva leve
-    { padrao_chuva_lado,     10.0f,   0.2f,      1.0f,   0.0f },   // chuva lateral, lado sorteado
-    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 0 devolvida
-    { padrao_circulo,        16.0f,   2.0f,      1.0f,   0.8f },   // circulo do jevil
-    { padrao_explosao,       10.0f,   1.2f,      1.0f,   0.0f },   // explosao
+    // { padrao_chuva,          15.0f,   0.18f,     1.0f,   0.8f },   // chuva leve
+    // { padrao_chuva_lado,     10.0f,   0.2f,      1.0f,   0.0f },   // chuva lateral, lado sorteado
+    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 0 devolvida
+    // { padrao_circulo,        16.0f,   2.0f,      1.0f,   0.8f },   // circulo do jevil
+    // { padrao_explosao,       10.0f,   1.2f,      1.0f,   0.0f },   // explosao
     { padrao_gaiola,         11.0f,   3.6f,      1.0f,   0.0f },   // gaiola fechando num ponto
     { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 1 devolvida
     { padrao_barreira,       12.0f,   0.4f,      1.0f,   0.8f },   // barreiras do sans

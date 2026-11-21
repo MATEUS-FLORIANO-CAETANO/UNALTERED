@@ -147,9 +147,10 @@ void att_entidades(Game *g, float dt) {
         }
 
         // quando sair da tela, ativo = false
+        // bala com vida ja some sozinha: pode nascer fora da tela (ex: gaiola grande)
         const float MARGEM = 64.0f;
-        if (b->r.x < -MARGEM || b->r.x > VIRTUAL_W + MARGEM ||
-            b->r.y < -MARGEM || b->r.y > VIRTUAL_H + MARGEM) b->ativo = false;
+        if (b->vida <= 0 && (b->r.x < -MARGEM || b->r.x > VIRTUAL_W + MARGEM ||
+            b->r.y < -MARGEM || b->r.y > VIRTUAL_H + MARGEM)) b->ativo = false;
         }
 
 
