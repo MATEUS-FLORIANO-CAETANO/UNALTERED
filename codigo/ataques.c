@@ -358,13 +358,13 @@ static Onda ondas[] = {
     // padrao             duracao  intervalo  escala  atraso (opcional)
     { padrao_chuva,       15.0f,   0.18f,     1.0f,   0.8f },   // chuva leve
     { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 0 devolvida
-    { padrao_circulo,     16.0f,   2.0f,      1.0f,   0.0f },   // circulo do jevil
+    { padrao_circulo,     16.0f,   2.0f,      1.0f,   0.8f },   // circulo do jevil
     { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 1 devolvida
-    { padrao_barreira,    12.0f,   0.4f,      1.0f,   0.0f },   // barreiras do sans
+    { padrao_barreira,    12.0f,   0.4f,      1.0f,   0.8f },   // barreiras do sans
     { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 2 devolvida
-    { padrao_espingarda,   8.0f,   0.8f,      1.0f,   0.0f },   // espingarda
+    { padrao_espingarda,   8.0f,   0.8f,      1.0f,   0.8f },   // espingarda
     { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 3 devolvidas
-    { padrao_faca,        15.0f,   0.6f,      1.0f,   0.0f },   // facas com aviso
+    { padrao_faca,        15.0f,   0.6f,      1.0f,   0.8f },   // facas com aviso
     { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 4 devolvida
 };
 
