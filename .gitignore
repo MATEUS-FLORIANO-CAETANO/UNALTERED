@@ -1,2 +1,5 @@
 build/unaltered
-codigo/*.o
+build/obj-linux/
+build/unaltered.exe
+build/obj-win/
+build/vendor/

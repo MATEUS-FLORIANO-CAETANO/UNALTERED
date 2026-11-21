@@ -1,7 +1,5 @@
 // olhos do inimigo: desenho e reacoes ao parry.
-// cada reacao esta num bloco REACAO n (2, 3, 4). pra apagar uma, apaga o bloco dela
-// (e, na 2 e na 3, a chamada olhos_rebate() em parry.c)
-
+    
 #include "game.h"
 #include <math.h>   // atan2f, cosf, sinf
 
@@ -70,9 +68,9 @@ void desenha_olhos(Game *g) {
     float y       = OLHOS_Y;
     Bala *b = bala_parry(g);
 
-    // REACAO 4: ainda vai devolver = iris vermelha. ultima = olho meio fechado (cansado)
+    // REACAO 4: ainda vai devolver = iris colorida. ultima = olho meio fechado (cansado)
     if (b) {
-        if (b->rebates > 0) corIris = RED;
+        if (b->rebates > 0) corIris = ORANGE;
         else fecha = 0.35f;
     }
 
@@ -85,6 +83,8 @@ void desenha_olhos(Game *g) {
     // REACAO 3: recua pra cima no impacto e volta
     if (recuo > 0) y -= RECUO_PX * (recuo / RECUO_DUR);
 
-    desenha_olho((Vector2){ VIRTUAL_W / 2.0f - 50, y }, g->jogador, corIris, fecha);
-    desenha_olho((Vector2){ VIRTUAL_W / 2.0f + 50, y }, g->jogador, corIris, fecha);
+    desenha_olho((Vector2){ VIRTUAL_W / 2.0f, y }, g->jogador, corIris, fecha);
+
+    // desenha_olho((Vector2){ VIRTUAL_W / 2.0f - 50, y }, g->jogador, corIris, fecha);
+    // desenha_olho((Vector2){ VIRTUAL_W / 2.0f + 50, y }, g->jogador, corIris, fecha);
 }
