@@ -643,26 +643,26 @@ static void padrao_parry(Game *g, Onda o, int n) {
 
 // nova onda ou novo ataque: so uma linha aqui
 static Onda ondas[] = {
-    // // padrao             duracao  intervalo  escala  atraso (opcional)
-    // { padrao_chuva,          15.0f,   0.18f,     1.0f,   0.8f },   // chuva leve
-    // { padrao_chuva_lado,     10.0f,   0.2f,      1.0f,   0.0f },   // chuva lateral, lado sorteado
-    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 0 devolvida
-    // { padrao_circulo,        16.0f,   2.0f,      1.0f,   0.0f },   // circulo do jevil
-    // { padrao_explosao,       10.0f,   1.2f,      1.0f,   0.0f },   // explosao
-    // { padrao_gaiola,         11.0f,   3.6f,      1.0f,   0.0f },   // gaiola fechando num ponto
-    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 1 devolvida
-    // { padrao_barreira,       12.0f,   0.4f,      1.0f,   0.0f },   // barreiras do sans
-    // { padrao_chuva_laser,    10.0f,   1.8f,      1.0f,   0.0f },   // chuva com laser e folga
-    // { padrao_chuva_alterna,  10.0f,   0.2f,      1.0f,   0.0f },   // chuva lateral alternando
-    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 2 devolvida
-    // { padrao_espingarda,      8.0f,   0.8f,      1.0f,   0.0f },   // espingarda
-    // { padrao_quica,          10.0f,   0.5f,      1.0f,   0.0f },   // golpes quicando
-    // { padrao_enxame,         10.0f,   0.36f,     1.0f,   0.0f },   // enxame
-    // { padrao_perseguidora,    9.0f,   3.0f,      1.0f,   0.0f },   // perseguidoras (3)
-    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 3 devolvidas
-    // { padrao_faca,           15.0f,   0.6f,      1.0f,   0.0f },   // facas com aviso
-    // { padrao_facas_cruz,     10.0f,   1.6f,      1.0f,   0.0f },   // facas em cruz
-    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 4 devolvida
+    // padrao                duracao  intervalo  escala  atraso (opcional)
+    { padrao_chuva,          15.0f,   0.18f,     1.0f,   0.8f },   // chuva leve
+    { padrao_chuva_lado,     10.0f,   0.2f,      1.0f,   0.0f },   // chuva lateral, lado sorteado
+    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 0 devolvida
+    { padrao_circulo,        16.0f,   2.0f,      1.0f,   0.8f },   // circulo do jevil
+    { padrao_explosao,       10.0f,   1.2f,      1.0f,   0.0f },   // explosao
+    { padrao_gaiola,         11.0f,   3.6f,      1.0f,   0.0f },   // gaiola fechando num ponto
+    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 1 devolvida
+    { padrao_barreira,       12.0f,   0.4f,      1.0f,   0.8f },   // barreiras do sans
+    { padrao_chuva_laser,    10.0f,   1.8f,      1.0f,   0.0f },   // chuva com laser e folga
+    { padrao_chuva_alterna,  10.0f,   0.2f,      1.0f,   0.0f },   // chuva lateral alternando
+    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 2 devolvida
+    { padrao_espingarda,      8.0f,   0.8f,      1.0f,   0.8f },   // espingarda
+    { padrao_quica,          10.0f,   0.5f,      1.0f,   0.0f },   // golpes quicando
+    { padrao_enxame,         10.0f,   0.36f,     1.0f,   0.0f },   // enxame
+    { padrao_perseguidora,    9.0f,   3.0f,      1.0f,   0.0f },   // perseguidoras (3)
+    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 3 devolvidas
+    { padrao_faca,           15.0f,   0.6f,      1.0f,   0.8f },   // facas com aviso
+    { padrao_facas_cruz,     10.0f,   1.6f,      1.0f,   0.0f },   // facas em cruz
+    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 4 devolvida
 };
 
 // quantidade de ondas = tamanho total / tamanho de cada
