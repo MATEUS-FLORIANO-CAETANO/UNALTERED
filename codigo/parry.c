@@ -26,6 +26,7 @@ void att_parry(Game *g, bool apertou, float dt) {
         if (g->janela_parry > 0 && b->vel.y > 0 && CheckCollisionRecs(zona, b->r)) {
             b->vel.y = -b->vel.y;
             g->janela_parry = 0;   // um rebate por aperto
+            g->hp += 5;
             efeito_parry();
         }
 

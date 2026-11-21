@@ -65,10 +65,13 @@ typedef struct {
 typedef struct {
     estadoGame estado; 
     Rectangle caixa; 
+
     Vector2 jogador; 
+    
     int hp; 
     float iframes;
-    
+    int cont_dano;
+
     // instancia 256 balas, cada uma com estado ativo/inativo
     // assim, nao precisa alocar dinamicamente
     Bala balas[MAX_BALAS];
