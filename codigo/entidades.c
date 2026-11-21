@@ -31,9 +31,17 @@ void spawn_bala(Game *g, Bala nova) {
 static void desenha_bala(Bala *b) {
     Color cor = b->rebativel ? ORANGE : WHITE;
     if (b->textura != NULL) {
-        float px = b->r.x + (b->r.width  - b->textura->width  * b->escala) / 2.0f;
-        float py = b->r.y + (b->r.height - b->textura->height * b->escala) / 2.0f;
-        DrawTextureEx(*b->textura, (Vector2){ px, py }, 0.0f, b->escala, cor);
+        if (b->invisivel) return;  
+        // CLAUDE: rotacao de texturas
+        // dest posicionado no centro da hitbox + origem no centro da textura:
+        // fica centralizada e gira em volta do proprio meio (com angulo 0 = igual a antes)
+        Texture2D t = *b->textura;
+        float w = t.width * b->escala, h = t.height * b->escala;
+        Rectangle dest = { b->r.x + b->r.width / 2, b->r.y + b->r.height / 2, w, h };
+        DrawTexturePro(t, (Rectangle){ 0, 0, (float)t.width, (float)t.height },
+                       dest, (Vector2){ w / 2, h / 2 }, b->angulo, cor);
+    
+    
     } else if (b->oval) {
         DrawEllipse(b->r.x + b->r.width / 2, b->r.y + b->r.height / 2,
                     b->r.width / 2, b->r.height / 2, cor);

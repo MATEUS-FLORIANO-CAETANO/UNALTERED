@@ -52,6 +52,10 @@
  *       .persiste = true,                        // nao some ao acertar
  *       .recorta  = true,                        // so aparece dentro da caixa
  *       .textura  = &sprite, .escala = o.escala,
+ * 
+ *       .angulo   = atan2f(vel.y, vel.x) * RAD2DEG, // CLAUDE: nao soubemos fazer. 
+ *                                                      gira o desenho (graus) pra onde vai
+ *
  *       .segue    = 0.6f,                        // s acompanhando a alma antes da espera
  *       .vida     = 2.0f,                        // s ate sumir (0 = nunca)
  *       .persegue = 2.0f,                        // rad/s girando a vel pra alma
@@ -290,10 +294,20 @@ static void padrao_faca(Game *g, Onda o, int n) {
     Vector2 ponta = no_circulo(c, RAIO, ang);
     Vector2 dir = rumo(ponta, g->jogador, 1);   // unitario, mirando na alma
 
+    // CLAUDE: quadrados escondidos. com sprite, a faca inteira e desenhada 1x so no
+    // quadradinho do meio da lamina, girada pra mirar na alma; os outros ficam
+    // invisiveis mas continuam cortando. sem sprite nada muda (invisivel e ignorado).
+    // descomentar quando assets/faca.png existir (desenhar apontando pra direita, ~41x5):
+    // static Texture2D faca = { 0 };
+    // if (faca.id == 0) faca = LoadTexture("assets/faca.png");
+
     for (int k = 0; k < M; k++) {
         // k = 0 e a ponta; o resto vai ficando pra tras ao longo da lamina
         Vector2 pos = Vector2Subtract(ponta, Vector2Scale(dir, k * PASSO));
         spawn_bala(g, (Bala){
+            // .textura   = &faca,
+            .invisivel = (k != M / 2),
+            .angulo    = atan2f(dir.y, dir.x) * RAD2DEG,
             .r        = ret_centrado(pos, TAM, TAM),
             .vel      = Vector2Scale(dir, -RECUO),   // recua antes de ir
             .acel     = Vector2Scale(dir, ACEL),

@@ -12,5 +12,6 @@
 4. bug fix de texturas e sons que nao carregavam devido ao caminho dos arquivos ser relativo ao local do executavel
 5. implementação de efeitos
 6. conserto do rebate
+7. rotação de texturas
 
-a logica em geral, a estrutura do motor, e toda arte em musica foi feita por humanos
+a logica em geral, a estrutura do motor, e toda arte foi feita por humanos

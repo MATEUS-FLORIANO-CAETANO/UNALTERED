@@ -46,6 +46,11 @@ typedef struct {
 
     Texture2D *textura;   // NULL = quadrado branco
     float escala;         // multiplica tam do desenho
+    
+    float angulo;         // graus. gira SO o desenho da textura em volta do centro da
+                          // hitbox (a hitbox continua reta). desenhe a textura apontando pra direita
+    bool invisivel;       // CLAUDE: com textura, nao desenha (mas colide). sem textura, ignorado.
+                          // ex: so 1 quadradinho da lamina da faca desenha o sprite inteiro
 
     bool ativo;           
     Vector2 desloc;       // distancia ate a alma guardada no spawn (usada por 'segue')
