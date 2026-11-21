@@ -68,16 +68,17 @@
  * dps coloca uma linha na tabela ondas[].
  */
 
-// cada onda carrega a funcao do padrao, sua duracao (s), o intervalo entre disparos (s)
-// e a escala das balas
+// cada onda carrega a funcao do padrao, sua duracao (s), o intervalo entre disparos (s),
+// a escala das balas e o atraso (s) antes do 1o disparo (opcional, 0 se omitido)
 typedef struct Onda Onda;
 typedef void (*Padrao)(Game *g, Onda o, int n);
 
 struct Onda {
     Padrao padrao;
-    float duracao;
+    float duracao;     // s disparando (conta depois do atraso)
     float intervalo;
     float escala;
+    float atraso;      // s esperando antes do 1o disparo
 };
 
 
@@ -128,10 +129,15 @@ static void padrao_chuva(Game *g, Onda o, int n) {
     float fator = GetRandomValue(110, 200) / 100.0f;
     float escala = o.escala * fator;
 
-    // hitbox base 10x7 (o png e 32x32, mas o desenho visivel e ~10x13)
-    // mais baixa que larga: a ponta fina da gota nao machuca
-    float w = 10 * escala;
-    float h = 7 * escala;
+    // chuva-fogo.png e 16x16, a gota ocupa x 4..11, y 0..9. duas hitboxes:
+    // corpo: oval 8x6 nas linhas 4..9 (centro y = 7). o centro do png e 8,
+    //        entao o sprite e desenhado 1px abaixo do centro da hitbox
+    // chama: retangulo 3x3 em x 5..7, linhas 1..3 (a linguinha da direita e a
+    //        pontinha da linha 0 ficam de fora)
+    float w = 8 * escala;
+    float h = 6 * escala;
+    const Vector2 DESLOC = { 0, 1.0f };
+    Rectangle cauda = { 1 * escala, -3 * escala, 3 * escala, 3 * escala };  // relativo ao corpo
 
     // x aleatorio dentro da caixa, sem passar da parede direita
     Rectangle in = interior(g);
@@ -139,10 +145,13 @@ static void padrao_chuva(Game *g, Onda o, int n) {
 
     spawn_bala(g, (Bala){
         .r       = { x, g->caixa.y - h, w, h },   // logo acima da caixa
+        .extra   = cauda,
+        .oval    = true,
         .vel     = { 0, 120 },
         .recorta = true,                          // so aparece qnd entra
         .textura = &lagrima,
-        .escala  = escala,                       
+        .escala  = escala,
+        .sprite_desloc = DESLOC,
     });
 }
 
@@ -346,17 +355,17 @@ static void padrao_parry(Game *g, Onda o, int n) {
 
 // nova onda ou novo ataque: so uma linha aqui
 static Onda ondas[] = {
-    // padrao             duracao  intervalo  escala
-    { padrao_chuva,       15.0f,   0.15f,     1.0f },   // chuva leve
-    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 0 devolvida
-    { padrao_circulo,     16.0f,   2.0f,      1.0f },   // circulo do jevil
-    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 1 devolvida
-    { padrao_barreira,    12.0f,   0.4f,      1.0f },   // barreiras do sans
-    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 2 devolvida
-    { padrao_espingarda,   8.0f,   0.8f,      1.0f },   // espingarda
-    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 3 devolvidas
-    { padrao_faca,        15.0f,   0.6f,      1.0f },   // facas com aviso
-    { padrao_parry,        0.1f,   99.0f,     1.0f },   // pong, 4 devolvida
+    // padrao             duracao  intervalo  escala  atraso (opcional)
+    { padrao_chuva,       15.0f,   0.18f,     1.0f,   0.8f },   // chuva leve
+    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 0 devolvida
+    { padrao_circulo,     16.0f,   2.0f,      1.0f,   0.0f },   // circulo do jevil
+    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 1 devolvida
+    { padrao_barreira,    12.0f,   0.4f,      1.0f,   0.0f },   // barreiras do sans
+    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 2 devolvida
+    { padrao_espingarda,   8.0f,   0.8f,      1.0f,   0.0f },   // espingarda
+    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 3 devolvidas
+    { padrao_faca,        15.0f,   0.6f,      1.0f,   0.0f },   // facas com aviso
+    { padrao_parry,        0.1f,   99.0f,     1.0f,   0.0f },   // pong, 4 devolvida
 };
 
 // quantidade de ondas = tamanho total / tamanho de cada
@@ -378,15 +387,18 @@ bool att_ondas(Game *g, float dt) {
 
     Onda atual = ondas[g->onda];
 
+    // tempo contado a partir do fim do atraso
+    float t = g->tempoOnda - atual.atraso;
+
     // disparo n acontece no instante n * intervalo
     // depois da duracao para de disparar
-    if (g->tempoOnda <= atual.duracao &&
-        g->tempoOnda >= g->disparo * atual.intervalo) {
+    if (t >= 0 && t <= atual.duracao &&
+        t >= g->disparo * atual.intervalo) {
         atual.padrao(g, atual, g->disparo);
         g->disparo++;
     }
 
-    if (g->tempoOnda > atual.duracao && !tem_balas(g)) {
+    if (t > atual.duracao && !tem_balas(g)) {
         g->onda++;
         g->tempoOnda = -PAUSA_ONDAS;   // negativo: espera antes do 1o disparo
         g->disparo = 0;

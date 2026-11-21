@@ -4,3 +4,4 @@ build/unaltered.exe
 build/obj-win/
 build/vendor/
 rodar-wine.sh
+codigo/*.o

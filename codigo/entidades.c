@@ -27,31 +27,57 @@ void spawn_bala(Game *g, Bala nova) {
     // array cheio bala nao nasce
 }
 
+// elipse com centro em float. DrawEllipse/DrawEllipseLines do raylib recebem o centro
+// em int e truncam, deslocando o desenho ate 1px pra esquerda/cima da hitbox real
+#define SEGS_ELIPSE 36
+static Vector2 ponto_elipse(Vector2 c, float rx, float ry, int k) {
+    float a = k * 2 * PI / SEGS_ELIPSE;
+    return (Vector2){ c.x + rx * cosf(a), c.y + ry * sinf(a) };
+}
+
+static void elipse(Rectangle r, Color cor) {
+    Vector2 c = { r.x + r.width / 2, r.y + r.height / 2 };
+    for (int k = 0; k < SEGS_ELIPSE; k++)   // ordem anti-horaria na tela, como o raylib quer
+        DrawTriangle(c, ponto_elipse(c, r.width / 2, r.height / 2, k + 1),
+                        ponto_elipse(c, r.width / 2, r.height / 2, k), cor);
+}
+
+static void elipse_contorno(Rectangle r, Color cor) {
+    Vector2 c = { r.x + r.width / 2, r.y + r.height / 2 };
+    for (int k = 0; k < SEGS_ELIPSE; k++)
+        DrawLineV(ponto_elipse(c, r.width / 2, r.height / 2, k),
+                  ponto_elipse(c, r.width / 2, r.height / 2, k + 1), cor);
+}
+
 // sem sprite desenha quadrado
 static void desenha_bala(Bala *b) {
     Color cor = b->rebativel ? ORANGE : WHITE;
     if (b->textura != NULL) {
-        if (b->invisivel) return;  
+        if (b->invisivel) return;
         // CLAUDE: rotacao de texturas
-        // dest posicionado no centro da hitbox + origem no centro da textura:
-        // fica centralizada e gira em volta do proprio meio (com angulo 0 = igual a antes)
+        // dest posicionado no centro da hitbox (+ sprite_desloc) + origem no centro da
+        // textura: fica centralizada e gira em volta do proprio meio (angulo 0 = sem giro)
         Texture2D t = *b->textura;
         float w = t.width * b->escala, h = t.height * b->escala;
-        Rectangle dest = { b->r.x + b->r.width / 2, b->r.y + b->r.height / 2, w, h };
+        Rectangle dest = { b->r.x + b->r.width  / 2 + b->sprite_desloc.x * b->escala,
+                           b->r.y + b->r.height / 2 + b->sprite_desloc.y * b->escala, w, h };
         DrawTexturePro(t, (Rectangle){ 0, 0, (float)t.width, (float)t.height },
                        dest, (Vector2){ w / 2, h / 2 }, b->angulo, cor);
-    
-    
     } else if (b->oval) {
-        DrawEllipse(b->r.x + b->r.width / 2, b->r.y + b->r.height / 2,
-                    b->r.width / 2, b->r.height / 2, cor);
+        elipse(b->r, cor);
     } else {
         DrawRectangleRec(b->r, cor);
     }
 }
 
 // oval: ponto da hitbox mais perto do centro da elipse, dentro dela?
+// extra: 2a hitbox retangular que anda junto com r
 static bool acerta(Rectangle hitbox, Bala *b) {
+    if (b->extra.width > 0) {
+        Rectangle e = { b->r.x + b->extra.x, b->r.y + b->extra.y,
+                        b->extra.width, b->extra.height };
+        if (CheckCollisionRecs(hitbox, e)) return true;
+    }
     if (!b->oval) return CheckCollisionRecs(hitbox, b->r);
 
     float rx = b->r.width / 2, ry = b->r.height / 2;
@@ -165,5 +191,23 @@ void desenha_entidades(Game *g) {
     }
 
     EndScissorMode();
+}
+
+// debug (modo foco): contorno das hitboxes de todas as balas, sem recorte.
+// vermelho = hitbox principal (r), amarelo = extra
+void desenha_hitboxes(Game *g) {
+    for (int i = 0; i < MAX_BALAS; i++) {
+        Bala *b = &g->balas[i];
+        if (!b->ativo) continue;
+
+        if (b->oval)
+            elipse_contorno(b->r, RED);
+        else
+            DrawRectangleLinesEx(b->r, 1, RED);
+
+        if (b->extra.width > 0)
+            DrawRectangleLinesEx((Rectangle){ b->r.x + b->extra.x, b->r.y + b->extra.y,
+                                              b->extra.width, b->extra.height }, 1, YELLOW);
+    }
 }
 

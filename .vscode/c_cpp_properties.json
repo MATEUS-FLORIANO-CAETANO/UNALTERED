@@ -14,7 +14,6 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/codigo",
-                "${workspaceFolder}/build/vendor/raylib-6.0_win64_mingw-w64/include",
                 "${env:HOME}/.local/include",
                 "/usr/local/include"
             ],

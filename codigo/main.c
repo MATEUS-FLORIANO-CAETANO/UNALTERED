@@ -219,7 +219,10 @@ static void desenha_jogando(Game *g)
     // desloca metade do tamanho pra centralizar a alma na posicao do jogador
     // invencivel: pisca (10 metades por segundo)
     if (g->iframes <= 0 || (int)(g->iframes * 10) % 2 == 0)
-        DrawTexture(alma, g->jogador.x - alma.width / 2.0f, g->jogador.y - alma.height / 2.0f, WHITE);
+        // DrawTextureV (float): DrawTexture recebe int e trunca, deslocando o sprite
+        // ate 1px pra esquerda/cima em relacao a hitbox
+        DrawTextureV(alma, (Vector2){ g->jogador.x - alma.width / 2.0f,
+                                      g->jogador.y - alma.height / 2.0f }, WHITE);
 
     // modo foco: mostra a hitbox real
     if (IsActionDown(ACTION_FOCO))
@@ -229,6 +232,8 @@ static void desenha_jogando(Game *g)
     DrawText(TextFormat("HP: %d; ESTADO: %d", g->hp, g->estado), 10, 50, 20, WHITE);
 
     desenha_entidades(g);
+    // modo foco: contorno das hitboxes das balas por cima delas
+    if (IsActionDown(ACTION_FOCO)) desenha_hitboxes(g);
     desenha_parry(g);
 
     desenha_olhos(g);   // olhos.c
