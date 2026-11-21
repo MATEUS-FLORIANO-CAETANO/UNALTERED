@@ -453,7 +453,7 @@ static void padrao_espingarda(Game *g, Onda o, int n) {
 // a hitbox e uma fileira de M quadradinhos com o mesmo movimento, formando a lamina
 // (Rectangle nao gira).
 // uma faca: ponta = onde nasce a ponta da lamina, dir = unitario pra onde ela vai.
-// usada por padrao_faca, padrao_facas_seguidas e padrao_facas_cruz
+// usada por padrao_faca e padrao_facas_cruz
 static void spawn_faca(Game *g, Onda o, Vector2 ponta, Vector2 dir, float segue, float espera) {
     const float ACEL  = 55000.0f;  // px/s^2
     const float RECUO = 250.0f;   // px/s
@@ -500,38 +500,6 @@ static void padrao_faca(Game *g, Onda o, int n) {
     Vector2 dir = rumo(ponta, g->jogador, 1);   // unitario, mirando na alma
 
     spawn_faca(g, o, ponta, dir, SEGUE, AVISO);
-}
-
-// ---------------------------------------------------------------------------------
-
-// facas em sequencia, cada uma acompanhando a alma por um tempo diferente
-// (1.0, 1.3, 1.6, 1.0, 1.3...). so tem uma faca na tela por vez: a proxima nasce
-// logo depois da anterior disparar, entao nunca tem dois lasers ao mesmo tempo
-// e o ritmo muda a cada faca.
-// o.intervalo aqui e so o 'tique' (bem pequeno): a funcao conta o tempo sozinha
-// e so cria a faca quando a anterior ja foi.
-// nascem em volta da ALMA (nao da caixa), pra que o 'segue' nunca leve a lamina
-// pra fora da tela (bala fora da tela e apagada)
-static void padrao_facas_seguidas(Game *g, Onda o, int n) {
-    const float RAIO    = 100.0f;   // distancia da alma
-    const float SEGUES[] = { 1.0f, 1.3f, 1.6f };   // s acompanhando, em ordem
-    const int   K       = sizeof(SEGUES) / sizeof(SEGUES[0]);
-    const float FOLGA   = 0.15f;    // s entre uma faca disparar e a proxima nascer
-
-    static float falta;   // s ate a proxima faca nascer
-    static int   i;       // qual SEGUE usar
-    if (n == 0) { falta = 0; i = 0; }
-
-    falta -= o.intervalo;
-    if (falta > 0) return;
-
-    float segue = SEGUES[i % K];
-    i++;
-    falta = segue + FOLGA;
-
-    float ang = GetRandomValue(0, 359) * DEG2RAD;
-    Vector2 ponta = no_circulo(g->jogador, RAIO, ang);
-    spawn_faca(g, o, ponta, rumo(ponta, g->jogador, 1), segue, 0);
 }
 
 // ---------------------------------------------------------------------------------
