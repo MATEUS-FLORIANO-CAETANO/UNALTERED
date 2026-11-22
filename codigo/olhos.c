@@ -3,8 +3,8 @@
 #include "game.h"
 #include <math.h>   // atan2f, cosf, sinf
 
-#define RAIO_ESCLERA 40.0f
-#define RAIO_IRIS    12.0f
+#define RAIO_ESCLERA 80.0f
+#define RAIO_IRIS    24.0f
 #define OLHOS_Y      130.0f
 
 #define PISCADA_DUR  0.15f   // segs. pra fechar e abrir no rebate

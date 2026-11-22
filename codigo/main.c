@@ -201,7 +201,7 @@ static void atualiza_jogando(Game *g, float dt)
     if (IsActionDown(ACTION_LEFT))  g->jogador.x -= dt * vel;
     if (IsActionDown(ACTION_RIGHT)) g->jogador.x += dt * vel;
 
-    // giro continuo (para junto com o hitstop, ja que so roda aqui)
+    // giro continuo
     angulo_alma = fmodf(angulo_alma + GIRO_ALMA * dt, 360.0f);
 
     // x e y da caixa nao contam borda. hitbox da alma fica no canto e nao no centro. / 2 ajeita
