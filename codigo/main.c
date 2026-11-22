@@ -57,6 +57,10 @@ static Texture2D almas[ALMA_N];
 static int alma_atual = ALMA_IDLE;
 #define alma (almas[alma_atual])
 
+#define GIRO_ALMA 90.0f          // graus/s: meia volta por segundo
+static float angulo_alma = 0.0f;
+static void desenha_alma(Vector2 pos);
+
 int main(void)
 {
     //-----------------------------------------------------------------------------------------
@@ -212,6 +216,9 @@ static void atualiza_jogando(Game *g, float dt)
     else if (dy < 0) alma_atual = ALMA_CIMA;
     else             alma_atual = ALMA_IDLE;
 
+    // giro continuo (para junto com o hitstop, ja que so roda aqui)
+    angulo_alma = fmodf(angulo_alma + GIRO_ALMA * dt, 360.0f);
+
     // x e y da caixa nao contam borda. hitbox da alma fica no canto e nao no centro. / 2 ajeita
     float meiaW = alma.width  / 2.0f;
     float meiaH = alma.height / 2.0f;
@@ -251,8 +258,7 @@ static void desenha_jogando(Game *g)
     if (g->iframes <= 0 || (int)(g->iframes * 10) % 2 == 0)
         // DrawTextureV (float): DrawTexture recebe int e trunca, deslocando o sprite
         // ate 1px pra esquerda/cima em relacao a hitbox
-        DrawTextureV(alma, (Vector2){ g->jogador.x - alma.width / 2.0f,
-                                      g->jogador.y - alma.height / 2.0f }, WHITE);
+        desenha_alma(g->jogador);
 
     // modo foco: mostra a hitbox real
     if (IsActionDown(ACTION_FOCO))
@@ -269,6 +275,16 @@ static void desenha_jogando(Game *g)
     desenha_olhos(g);   // olhos.c
 }
 
+// alma girada em volta do proprio centro. DrawTexturePro: dest.x/y e onde
+// fica a origem, e a origem e o meio do sprite, entao pos ja e o centro
+static void desenha_alma(Vector2 pos)
+{
+    float w = (float)alma.width, h = (float)alma.height;
+    DrawTexturePro(alma, (Rectangle){ 0, 0, w, h },
+                   (Rectangle){ pos.x, pos.y, w, h },
+                   (Vector2){ w / 2.0f, h / 2.0f }, angulo_alma, WHITE);
+}
+
 // tela de morte/vitoria
 // titulo grande centralizado no topo. usado na tela de fim e no aviso de wave
 static void desenha_titulo(const char *titulo, Color cor)
@@ -278,8 +294,7 @@ static void desenha_titulo(const char *titulo, Color cor)
 
 static void desenha_fim(Game *g, const char *titulo, Color cor)
 {
-    DrawTextureV(alma, (Vector2){ g->jogador.x - alma.width / 2.0f,
-                                  g->jogador.y - alma.height / 2.0f }, WHITE);
+    desenha_alma(g->jogador);
 
     int cx = VIRTUAL_W / 2;
     int y  = 130 - 20;

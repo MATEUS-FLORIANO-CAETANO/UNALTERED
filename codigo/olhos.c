@@ -43,7 +43,7 @@ static void desenha_olho(Vector2 centro, Vector2 alvo, Color corIris, float fech
         iris.y = centro.y + (RAIO_ESCLERA - RAIO_IRIS) * sinf(angulo);
     }
 
-    DrawCircleV(centro, RAIO_ESCLERA, LIGHTGRAY);
+    DrawCircleV(centro, RAIO_ESCLERA, WHITE);
     DrawCircleV(iris, RAIO_IRIS, corIris);
     DrawCircleV(iris, 5, BLACK);
 
@@ -63,7 +63,7 @@ void desenha_olhos(Game *g) {
     // levou a bala: pisca 3x em 1s (6 metades)
     if (g->anim_inimigo > 0 && (int)(g->anim_inimigo * 6) % 2 == 1) return;
 
-    Color corIris = BROWN;
+    Color corIris = DARKGREEN;
     float fecha   = 0;
     float y       = OLHOS_Y;
     Bala *b = bala_parry(g);

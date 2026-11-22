@@ -52,7 +52,7 @@ static void elipse_contorno(Rectangle r, Color cor) {
 
 // sem sprite desenha quadrado
 static void desenha_bala(Bala *b) {
-    Color cor = b->rebativel ? ORANGE : WHITE;
+    Color cor = b->rebativel ? ORANGE : GREEN;
     if (b->textura != NULL) {
         if (b->invisivel) return;
         // CLAUDE: rotacao de texturas
