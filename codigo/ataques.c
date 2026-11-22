@@ -500,8 +500,8 @@ static void padrao_faca(Game *g, Onda o, int n) {
     (void)n;
 
     const float RAIO  = 120.0f;   // distancia do centro da caixa onde a faca nasce
-    const float SEGUE = por_nivel(o, 0.8f, 0.6f, 0.45f); // s acompanhando a alma (mesma distancia, mesma mira)
-    const float AVISO = 0.0f;     // s congelada antes de disparar
+    const float SEGUE = por_nivel(o, 0.0f, 0.6f, 0.45f); // s acompanhando a alma (mesma distancia, mesma mira)
+    const float AVISO = 0.9f;     // s congelada antes de disparar
 
     Vector2 c = centro(g->caixa);
     float ang = GetRandomValue(0, 359) * DEG2RAD;
@@ -519,8 +519,8 @@ static void padrao_faca(Game *g, Onda o, int n) {
 static void padrao_facas_cruz(Game *g, Onda o, int n) {
     (void)n;
     const float DIST  = 100.0f;   // distancia da ponta ate a alma
-    const float SEGUE = por_nivel(o, 1.0f, 0.8f, 0.6f);     // s acompanhando
-    const float AVISO = por_nivel(o, 0.45f, 0.35f, 0.25f);  // s congeladas antes de fechar
+    const float SEGUE = por_nivel(o, 0, 0.8f, 0.6f);     // s acompanhando
+    const float AVISO = por_nivel(o, 0.9f, 0.15f, 0.08f);  // s congeladas antes de fechar
 
     float lx = GetRandomValue(0, 1) ? 1.0f : -1.0f;   // +1 = horizontal vem da direita
     float ly = GetRandomValue(0, 1) ? 1.0f : -1.0f;   // +1 = vertical vem de baixo
@@ -668,49 +668,49 @@ static Onda ondas[] = {
     // fora da tabela (dá pra usar): padrao_chuva_lado, padrao_explosao
 
     // NIVEL 1: facil
-    { padrao_chuva,          12.0f,   0.30f,     1.0f,   0.8f,   1 },   // chuva
-    { padrao_circulo,        14.0f,   2.4f,      1.0f,   0.5f,   1 },   // circulo do jevil
-    { padrao_gaiola,         11.0f,   4.2f,      1.0f,   0.0f,   1 },   // gaiola fechando num ponto
-    { padrao_barreira,       10.0f,   0.6f,      1.0f,   0.5f,   1 },   // barreiras do sans
-    { padrao_chuva_laser,    10.0f,   2.2f,      1.0f,   0.0f,   1 },   // chuva com laser e folga
-    { padrao_chuva_alterna,  10.0f,   0.26f,     1.0f,   0.0f,   1 },   // chuva lateral alternando
-    { padrao_espingarda,      8.0f,   1.0f,      1.0f,   0.5f,   1 },   // espingarda
-    { padrao_quica,          10.0f,   0.65f,     1.0f,   0.0f,   1 },   // golpes quicando
-    { padrao_enxame,         10.0f,   0.45f,     1.0f,   0.0f,   1 },   // enxame
-    { padrao_perseguidora,    9.0f,   4.6f,      1.0f,   0.0f,   1 },   // perseguidoras (2)
+    // { padrao_chuva,          12.0f,   0.30f,     1.0f,   0.8f,   1 },   // chuva
+    // { padrao_circulo,        14.0f,   2.4f,      1.0f,   0.5f,   1 },   // circulo do jevil
+    // { padrao_gaiola,         11.0f,   4.2f,      1.0f,   0.0f,   1 },   // gaiola fechando num ponto
+    // { padrao_barreira,       10.0f,   0.6f,      1.0f,   0.5f,   1 },   // barreiras do sans
+    // { padrao_chuva_laser,    10.0f,   2.2f,      1.0f,   0.0f,   1 },   // chuva com laser e folga
+    // { padrao_chuva_alterna,  10.0f,   0.26f,     1.0f,   0.0f,   1 },   // chuva lateral alternando
+    // { padrao_espingarda,      8.0f,   1.0f,      1.0f,   0.5f,   1 },   // espingarda
+    // { padrao_quica,          10.0f,   0.65f,     1.0f,   0.0f,   1 },   // golpes quicando
+    // { padrao_enxame,         10.0f,   0.45f,     1.0f,   0.0f,   1 },   // enxame
+    // { padrao_perseguidora,    9.0f,   4.6f,      1.0f,   0.0f,   1 },   // perseguidoras (2)
     { padrao_faca,           12.0f,   0.8f,      1.0f,   0.5f,   1 },   // facas com aviso
     { padrao_facas_cruz,     10.0f,   2.0f,      1.0f,   0.0f,   1 },   // facas em cruz
-    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f,   1 },   // pong, 1 bloqueio
+    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f,   1 },   // pong, 1 bloqueio
 
     // NIVEL 2: medio (valores originais)
-    { padrao_chuva,          15.0f,   0.22f,     1.0f,   0.5f,   2 },
-    { padrao_circulo,        16.0f,   2.0f,      1.0f,   0.5f,   2 },
-    { padrao_gaiola,         11.0f,   3.6f,      1.0f,   0.0f,   2 },
-    { padrao_barreira,       12.0f,   0.5f,      1.0f,   0.5f,   2 },
-    { padrao_chuva_laser,    10.0f,   1.8f,      1.0f,   0.0f,   2 },
-    { padrao_chuva_alterna,  10.0f,   0.2f,      1.0f,   0.0f,   2 },
-    { padrao_espingarda,      8.0f,   0.8f,      1.0f,   0.5f,   2 },
-    { padrao_quica,          10.0f,   0.5f,      1.0f,   0.0f,   2 },
-    { padrao_enxame,         10.0f,   0.36f,     1.0f,   0.0f,   2 },
-    { padrao_perseguidora,    9.0f,   3.0f,      1.0f,   0.0f,   2 },   // perseguidoras (3)
+    // { padrao_chuva,          15.0f,   0.22f,     1.0f,   0.5f,   2 },
+    // { padrao_circulo,        16.0f,   2.0f,      1.0f,   0.5f,   2 },
+    // { padrao_gaiola,         11.0f,   3.6f,      1.0f,   0.0f,   2 },
+    // { padrao_barreira,       12.0f,   0.5f,      1.0f,   0.5f,   2 },
+    // { padrao_chuva_laser,    10.0f,   1.8f,      1.0f,   0.0f,   2 },
+    // { padrao_chuva_alterna,  10.0f,   0.2f,      1.0f,   0.0f,   2 },
+    // { padrao_espingarda,      8.0f,   0.8f,      1.0f,   0.5f,   2 },
+    // { padrao_quica,          10.0f,   0.5f,      1.0f,   0.0f,   2 },
+    // { padrao_enxame,         10.0f,   0.36f,     1.0f,   0.0f,   2 },
+    // { padrao_perseguidora,    9.0f,   3.0f,      1.0f,   0.0f,   2 },   // perseguidoras (3)
     { padrao_faca,           15.0f,   0.6f,      1.0f,   0.5f,   2 },
     { padrao_facas_cruz,     10.0f,   1.6f,      1.0f,   0.0f,   2 },
-    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f,   2 },   // pong, 3 bloqueios
+    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f,   2 },   // pong, 3 bloqueios
 
     // NIVEL 3: dificil
-    { padrao_chuva,          15.0f,   0.18f,     1.25f,  0.5f,   3 },
-    { padrao_circulo,        16.0f,   1.6f,      1.0f,   0.5f,   3 },
-    { padrao_gaiola,         11.0f,   3.0f,      1.0f,   0.0f,   3 },
-    { padrao_barreira,       12.0f,   0.4f,      1.0f,   0.5f,   3 },
-    { padrao_chuva_laser,    10.0f,   1.5f,      1.0f,   0.0f,   3 },
-    { padrao_chuva_alterna,  10.0f,   0.16f,     1.0f,   0.0f,   3 },
-    { padrao_espingarda,     10.0f,   1.0f,      1.0f,   0.5f,   3 },
-    { padrao_quica,          10.0f,   0.4f,      1.0f,   0.0f,   3 },
-    { padrao_enxame,         10.0f,   0.28f,     1.0f,   0.0f,   3 },
-    { padrao_perseguidora,    9.0f,   2.4f,      1.0f,   0.0f,   3 },   // perseguidoras (4)
+    // { padrao_chuva,          15.0f,   0.18f,     1.25f,  0.5f,   3 },
+    // { padrao_circulo,        16.0f,   1.6f,      1.0f,   0.5f,   3 },
+    // { padrao_gaiola,         11.0f,   3.0f,      1.0f,   0.0f,   3 },
+    // { padrao_barreira,       12.0f,   0.4f,      1.0f,   0.5f,   3 },
+    // { padrao_chuva_laser,    10.0f,   1.5f,      1.0f,   0.0f,   3 },
+    // { padrao_chuva_alterna,  10.0f,   0.16f,     1.0f,   0.0f,   3 },
+    // { padrao_espingarda,     10.0f,   1.0f,      1.0f,   0.5f,   3 },
+    // { padrao_quica,          10.0f,   0.4f,      1.0f,   0.0f,   3 },
+    // { padrao_enxame,         10.0f,   0.28f,     1.0f,   0.0f,   3 },
+    // { padrao_perseguidora,    9.0f,   2.4f,      1.0f,   0.0f,   3 },   // perseguidoras (4)
     { padrao_faca,           15.0f,   0.5f,      1.0f,   0.5f,   3 },
     { padrao_facas_cruz,     10.0f,   1.3f,      1.0f,   0.0f,   3 },
-    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f,   3 },   // pong, 5 bloqueios
+    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f,   3 },   // pong, 5 bloqueios
 };
 
 // quantidade de ondas = tamanho total / tamanho de cada
