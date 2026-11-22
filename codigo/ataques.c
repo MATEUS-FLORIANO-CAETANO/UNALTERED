@@ -207,7 +207,7 @@ static void gota_lateral(Game *g, Onda o, bool da_esquerda) {
         .r       = { x, y, w, h },                // logo fora da parede
         .extra   = cauda,
         .oval    = true,
-        .vel     = { (da_esquerda ? 1 : -1) * por_nivel(o, 100, 120, 145), 0 },
+        .vel     = { (da_esquerda ? 1 : -1) * por_nivel(o, 100, 110, 120), 0 },
         .recorta = true,
         .textura = gota(),
         .escala  = escala,
@@ -234,8 +234,8 @@ static void padrao_chuva_alterna(Game *g, Onda o, int n) {
 // mostrando o laser de cada uma. depois cai tudo junto. a folga e onde nao tem laser.
 static void padrao_chuva_laser(Game *g, Onda o, int n) {
     (void)n;
-    const float AVISO = por_nivel(o, 1.1f, 0.9f, 0.7f);          // s parada mostrando os lasers
-    const float ACEL  = por_nivel(o, 400, 500, 620);             // px/s^2 pra baixo
+    const float AVISO = por_nivel(o, 0.9f, 0.7f, 0.5f);          // s parada mostrando os lasers
+    const float ACEL  = por_nivel(o, 800, 1000, 1500);             // px/s^2 pra baixo
     const float FOLGA = por_nivel(o, 2.5f, 2.0f, 1.6f) * TAM_ALMA; // largura minima do buraco
 
     float escala = o.escala;
@@ -704,7 +704,7 @@ static Onda ondas[] = {
     { padrao_barreira,       12.0f,   0.4f,      1.0f,   0.5f,   3 },
     { padrao_chuva_laser,    10.0f,   1.5f,      1.0f,   0.0f,   3 },
     { padrao_chuva_alterna,  10.0f,   0.16f,     1.0f,   0.0f,   3 },
-    { padrao_espingarda,     10.0f,   0.6f,      1.0f,   0.5f,   3 },
+    { padrao_espingarda,     10.0f,   1.0f,      1.0f,   0.5f,   3 },
     { padrao_quica,          10.0f,   0.4f,      1.0f,   0.0f,   3 },
     { padrao_enxame,         10.0f,   0.28f,     1.0f,   0.0f,   3 },
     { padrao_perseguidora,    9.0f,   2.4f,      1.0f,   0.0f,   3 },   // perseguidoras (4)
