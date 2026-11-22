@@ -51,11 +51,7 @@ static void desenha_jogando(Game *g);
 static void desenha_titulo(const char *titulo, Color cor);
 static void desenha_fim(Game *g, const char *titulo, Color cor);
 
-// sprites da alma: idle, cima, baixo, esquerda, direita (assets/alma1..5.png)
-enum { ALMA_IDLE, ALMA_CIMA, ALMA_BAIXO, ALMA_ESQ, ALMA_DIR, ALMA_N };
-static Texture2D almas[ALMA_N];
-static int alma_atual = ALMA_IDLE;
-#define alma (almas[alma_atual])
+static Texture2D alma;
 
 #define GIRO_ALMA 90.0f          // graus/s: meia volta por segundo
 static float angulo_alma = 0.0f;
@@ -98,8 +94,7 @@ int main(void)
     ChangeDirectory(GetApplicationDirectory());
     ChangeDirectory("..");
     dano = LoadSound("assets/snd-hurt1.ogg");      
-    for (int i = 0; i < ALMA_N; i++)
-        almas[i] = LoadTexture(TextFormat("assets/alma%d.png", i + 1));
+    alma = LoadTexture("assets/alma1.png");
 
     // olhos: descomentar quando os arquivos existirem (ver desenha_olho em olhos.c)
     // Texture2D esclera = LoadTexture("assets/esclera.png");
@@ -182,7 +177,7 @@ int main(void)
     // fechamento
     UnloadRenderTexture(alvo);
     UnloadSound(dano);
-    for (int i = 0; i < ALMA_N; i++) UnloadTexture(almas[i]);
+    UnloadTexture(alma);
     // UnloadTexture(esclera);
     // UnloadTexture(iris);
     CloseWindow();
@@ -205,16 +200,6 @@ static void atualiza_jogando(Game *g, float dt)
     if (IsActionDown(ACTION_DOWN))  g->jogador.y += dt * vel;
     if (IsActionDown(ACTION_LEFT))  g->jogador.x -= dt * vel;
     if (IsActionDown(ACTION_RIGHT)) g->jogador.x += dt * vel;
-
-    // sprite segue a direcao do input. teclas opostas se anulam.
-    // diagonal: horizontal tem prioridade
-    int dx = IsActionDown(ACTION_RIGHT) - IsActionDown(ACTION_LEFT);
-    int dy = IsActionDown(ACTION_DOWN)  - IsActionDown(ACTION_UP);
-    if      (dx > 0) alma_atual = ALMA_DIR;
-    else if (dx < 0) alma_atual = ALMA_ESQ;
-    else if (dy > 0) alma_atual = ALMA_BAIXO;
-    else if (dy < 0) alma_atual = ALMA_CIMA;
-    else             alma_atual = ALMA_IDLE;
 
     // giro continuo (para junto com o hitstop, ja que so roda aqui)
     angulo_alma = fmodf(angulo_alma + GIRO_ALMA * dt, 360.0f);
@@ -264,8 +249,10 @@ static void desenha_jogando(Game *g)
     if (IsActionDown(ACTION_FOCO))
         DrawRectangleRec((Rectangle){ g->jogador.x - HITBOX_ALMA / 2.0f, g->jogador.y - HITBOX_ALMA / 2.0f,
                                       HITBOX_ALMA, HITBOX_ALMA }, Fade(WHITE, 0.8f));
-
-    DrawText(TextFormat("HP: %d; ESTADO: %d", g->hp, g->estado), 10, 50, 20, WHITE);
+    
+    char *hp;
+    hp = TextFormat("HP: %d", g->hp);
+    DrawText(hp, VIRTUAL_W / 2 - MeasureText(hp, 40) / 2, 430 - 20, 20, WHITE);
 
     desenha_entidades(g);
     // modo foco: contorno das hitboxes das balas por cima delas
