@@ -48,6 +48,7 @@ static void SetActionsCursor(void);         // define setinhas
 // um par atualiza/desenha por estado
 static void atualiza_jogando(Game *g, float dt);
 static void desenha_jogando(Game *g);
+static void desenha_titulo(const char *titulo, Color cor);
 static void desenha_fim(Game *g, const char *titulo, Color cor);
 
 static Texture2D alma;
@@ -113,6 +114,10 @@ int main(void)
         switch (g.estado)
         {
         case ESTADO_JOGANDO: if (!congelado) atualiza_jogando(&g, dt); break;
+        case ESTADO_AVISO:   // "WAVE n": tudo parado ate o tempo acabar
+            g.tempo_aviso -= dt;
+            if (g.tempo_aviso <= 0) g.estado = ESTADO_JOGANDO;
+            break;
         case ESTADO_MORTE:   break;
         case ESTADO_VITORIA: break;
         }
@@ -140,6 +145,7 @@ int main(void)
             switch (g.estado)
             {
             case ESTADO_JOGANDO: desenha_jogando(&g); break;
+            case ESTADO_AVISO:   desenha_titulo(TextFormat("WAVE %d", g.nivel_aviso), WHITE); break;
             case ESTADO_MORTE:   desenha_fim(&g, "Você Morreu!", RED); break;
             case ESTADO_VITORIA: desenha_fim(&g, "Você Venceu!", GREEN); break;
             }
@@ -209,6 +215,14 @@ static void atualiza_jogando(Game *g, float dt)
     // sequencia de ondas retorna true quando todos os ataques acabam -> vitoria
     if (att_ondas(g, dt)) g->estado = ESTADO_VITORIA;
 
+    // contador de ondas entrou num nivel novo (ou e o comeco do jogo): tela "WAVE n"
+    int nivel = nivel_da_onda(g->onda);
+    if (g->estado == ESTADO_JOGANDO && nivel != 0 && nivel != g->nivel_aviso) {
+        g->nivel_aviso = nivel;
+        g->tempo_aviso = DURACAO_AVISO;
+        g->estado = ESTADO_AVISO;
+    }
+
     if (g->hp <= 0) g->estado = ESTADO_MORTE;
 }
 
@@ -240,6 +254,12 @@ static void desenha_jogando(Game *g)
 }
 
 // tela de morte/vitoria
+// titulo grande centralizado no topo. usado na tela de fim e no aviso de wave
+static void desenha_titulo(const char *titulo, Color cor)
+{
+    DrawText(titulo, VIRTUAL_W / 2 - MeasureText(titulo, 40) / 2, 130 - 20, 40, cor);
+}
+
 static void desenha_fim(Game *g, const char *titulo, Color cor)
 {
     DrawTextureV(alma, (Vector2){ g->jogador.x - alma.width / 2.0f,
@@ -248,7 +268,7 @@ static void desenha_fim(Game *g, const char *titulo, Color cor)
     int cx = VIRTUAL_W / 2;
     int y  = 130 - 20;
 
-    DrawText(titulo, cx - MeasureText(titulo, 40) / 2, y, 40, cor);
+    desenha_titulo(titulo, cor);
     y += 50;
 
     int ondas = g->onda;

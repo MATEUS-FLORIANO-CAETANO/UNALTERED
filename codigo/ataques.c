@@ -724,6 +724,12 @@ static bool tem_balas(Game *g) {
     return false;
 }
 
+// nivel da onda de indice 'onda' (g->onda). 0 = acabaram as ondas
+int nivel_da_onda(int onda) {
+    if (onda < 0 || onda >= NUM_ONDAS) return 0;
+    return ondas[onda].nivel;
+}
+
 // chamado 1x por frame no main.c. retorna true quando acabarem as ondas.
 // aqui que decide quando um padrao dispara.
 bool att_ondas(Game *g, float dt) {
