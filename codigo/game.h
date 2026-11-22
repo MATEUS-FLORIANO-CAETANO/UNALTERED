@@ -18,7 +18,7 @@ extern Sound dano;
 // guarda declaracoes das funcoes pro compilador. todo arquivo inclui game.h 
 // (compilador copia e cola os conteudos de game.h nos arquivos)
   
-typedef enum { ESTADO_JOGANDO, ESTADO_MORTE, ESTADO_VITORIA } estadoGame;
+typedef enum { ESTADO_JOGANDO, ESTADO_AVISO, ESTADO_MORTE, ESTADO_VITORIA } estadoGame;
 
 // r = hitbox (posicao + tamanho). o sprite e desenhado centralizado nela, pois a
 // imagem costuma ser maior que a parte visivel (ex: gota ~10x13 num png 32x32).
@@ -81,6 +81,8 @@ typedef struct {
     int disparo;       // quantas vezes o padrao da onda atual ja disparou
     bool parry;        // permitir parry?
     int contador_inimigo; // balas de parry ja lancadas
+    int nivel_aviso;      // nivel (wave) do ultimo aviso mostrado (0 = nenhum ainda)
+    float tempo_aviso;    // segs. restantes da tela de aviso
     bool rally_ganho;     // bala de parry acabou no inimigo? (false = errou, repete a onda)
     float anim_inimigo;   // segs. de piscada restantes
     float janela_parry;   // segs. de hitbox de parry ativa restantes
@@ -88,6 +90,7 @@ typedef struct {
 
 #define LINHA_INIMIGO 170   // base dos olhos (y=130, raio 40)
 #define PAUSA_ONDAS 0.8f    // segs. de respiro entre ondas
+#define DURACAO_AVISO 3.0f  // segs. da tela "WAVE n" no comeco de cada nivel
 #define VEL_FOCO 0.5f       // multiplica vel. da alma no modo foco
 #define JANELA_PARRY 0.2f   // segs. de hitbox ativa por aperto
 #define MULT_REBATE 1.3f    // vel. quando o inimigo devolve
@@ -100,6 +103,7 @@ void desenha_hitboxes(Game *g);   // debug: contorno das hitboxes (modo foco)
 
 // declaracao: usei em ataques.c
 bool att_ondas(Game *g, float dt);
+int nivel_da_onda(int onda);   // nivel (1..3) da onda, 0 se ja acabaram
 
 // declaracoes: parry.c
 void att_parry(Game *g, bool apertou, float dt);
