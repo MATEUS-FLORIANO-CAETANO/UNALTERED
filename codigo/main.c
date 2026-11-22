@@ -51,7 +51,11 @@ static void desenha_jogando(Game *g);
 static void desenha_titulo(const char *titulo, Color cor);
 static void desenha_fim(Game *g, const char *titulo, Color cor);
 
-static Texture2D alma;
+// sprites da alma: idle, cima, baixo, esquerda, direita (assets/alma1..5.png)
+enum { ALMA_IDLE, ALMA_CIMA, ALMA_BAIXO, ALMA_ESQ, ALMA_DIR, ALMA_N };
+static Texture2D almas[ALMA_N];
+static int alma_atual = ALMA_IDLE;
+#define alma (almas[alma_atual])
 
 int main(void)
 {
@@ -90,7 +94,8 @@ int main(void)
     ChangeDirectory(GetApplicationDirectory());
     ChangeDirectory("..");
     dano = LoadSound("assets/snd-hurt1.ogg");      
-    alma = LoadTexture("assets/alma.png");
+    for (int i = 0; i < ALMA_N; i++)
+        almas[i] = LoadTexture(TextFormat("assets/alma%d.png", i + 1));
 
     // olhos: descomentar quando os arquivos existirem (ver desenha_olho em olhos.c)
     // Texture2D esclera = LoadTexture("assets/esclera.png");
@@ -173,6 +178,7 @@ int main(void)
     // fechamento
     UnloadRenderTexture(alvo);
     UnloadSound(dano);
+    for (int i = 0; i < ALMA_N; i++) UnloadTexture(almas[i]);
     // UnloadTexture(esclera);
     // UnloadTexture(iris);
     CloseWindow();
@@ -195,6 +201,16 @@ static void atualiza_jogando(Game *g, float dt)
     if (IsActionDown(ACTION_DOWN))  g->jogador.y += dt * vel;
     if (IsActionDown(ACTION_LEFT))  g->jogador.x -= dt * vel;
     if (IsActionDown(ACTION_RIGHT)) g->jogador.x += dt * vel;
+
+    // sprite segue a direcao do input. teclas opostas se anulam.
+    // diagonal: horizontal tem prioridade
+    int dx = IsActionDown(ACTION_RIGHT) - IsActionDown(ACTION_LEFT);
+    int dy = IsActionDown(ACTION_DOWN)  - IsActionDown(ACTION_UP);
+    if      (dx > 0) alma_atual = ALMA_DIR;
+    else if (dx < 0) alma_atual = ALMA_ESQ;
+    else if (dy > 0) alma_atual = ALMA_BAIXO;
+    else if (dy < 0) alma_atual = ALMA_CIMA;
+    else             alma_atual = ALMA_IDLE;
 
     // x e y da caixa nao contam borda. hitbox da alma fica no canto e nao no centro. / 2 ajeita
     float meiaW = alma.width  / 2.0f;
