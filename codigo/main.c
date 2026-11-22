@@ -210,7 +210,6 @@ static void atualiza_jogando(Game *g, float dt)
     if (att_ondas(g, dt)) g->estado = ESTADO_VITORIA;
 
     if (g->hp <= 0) g->estado = ESTADO_MORTE;
-    if (g->contador_inimigo == 6) g->estado = ESTADO_VITORIA;   // congela ate ter tela de vitoria
 }
 
 static void desenha_jogando(Game *g)

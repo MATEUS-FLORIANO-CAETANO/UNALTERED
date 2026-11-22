@@ -79,7 +79,16 @@ struct Onda {
     float intervalo;
     float escala;
     float atraso;      // s esperando antes do 1o disparo
+    int nivel;         // 1 facil, 2 medio, 3 dificil. ao mudar de nivel a vida volta a 100
 };
+
+// valor conforme o nivel da onda. ex: por_nivel(o, 6, 8, 10) = 6 balas no facil...
+// o medio e sempre o valor original do padrao
+static float por_nivel(Onda o, float facil, float medio, float dificil) {
+    if (o.nivel <= 1) return facil;
+    if (o.nivel == 2) return medio;
+    return dificil;
+}
 
 
 // ---------------------------------------------------------------------------------
@@ -152,7 +161,7 @@ static void padrao_chuva(Game *g, Onda o, int n) {
         .r       = { x, g->caixa.y - h, w, h },   // logo acima da caixa
         .extra   = cauda,
         .oval    = true,
-        .vel     = { 0, 120 },
+        .vel     = { 0, por_nivel(o, 100, 120, 145) },
         .recorta = true,                          // so aparece qnd entra
         .textura = gota(),
         .escala  = escala,
@@ -198,7 +207,7 @@ static void gota_lateral(Game *g, Onda o, bool da_esquerda) {
         .r       = { x, y, w, h },                // logo fora da parede
         .extra   = cauda,
         .oval    = true,
-        .vel     = { da_esquerda ? 120.0f : -120.0f, 0 },
+        .vel     = { (da_esquerda ? 1 : -1) * por_nivel(o, 100, 120, 145), 0 },
         .recorta = true,
         .textura = gota(),
         .escala  = escala,
@@ -225,9 +234,9 @@ static void padrao_chuva_alterna(Game *g, Onda o, int n) {
 // mostrando o laser de cada uma. depois cai tudo junto. a folga e onde nao tem laser.
 static void padrao_chuva_laser(Game *g, Onda o, int n) {
     (void)n;
-    const float AVISO = 0.9f;               // s parada mostrando os lasers
-    const float ACEL  = 500.0f;             // px/s^2 pra baixo
-    const float FOLGA = 2.0f * TAM_ALMA;    // largura minima do buraco
+    const float AVISO = por_nivel(o, 1.1f, 0.9f, 0.7f);          // s parada mostrando os lasers
+    const float ACEL  = por_nivel(o, 400, 500, 620);             // px/s^2 pra baixo
+    const float FOLGA = por_nivel(o, 2.5f, 2.0f, 1.6f) * TAM_ALMA; // largura minima do buraco
 
     float escala = o.escala;
     float w = 8 * escala;
@@ -265,8 +274,8 @@ static void padrao_chuva_laser(Game *g, Onda o, int n) {
 // golpe quicando: cai do ceu devagar pra baixo, mas rapido pro lado,
 // e inverte o lado ao bater nas paredes da caixa
 static void padrao_quica(Game *g, Onda o, int n) {
-    const float VX  = 90.0f;   // px/s pro lado
-    const float VY  = 40.0f;    // px/s pra baixo
+    const float VX  = por_nivel(o, 75, 90, 110);   // px/s pro lado
+    const float VY  = por_nivel(o, 35, 40, 50);    // px/s pra baixo
     const float TAM = 8 * o.escala;
 
     Rectangle in = interior(g);
@@ -291,10 +300,10 @@ static void padrao_circulo(Game *g, Onda o, int n) {
     // static Texture2D jevil = { 0 };
     // if (jevil.id == 0) jevil = LoadTexture("assets/jevil.png");
 
-    const int   N      = 8;
-    const float RAIO   = 110.0f;   
-    const float ACEL   = 300.0f;   // px/s^2
-    const float ATRASO = 0.10f;    // segs. entre uma bala e a vizinha (volta = N*ATRASO)
+    const int   N      = (int)por_nivel(o, 6, 8, 10);
+    const float RAIO   = 110.0f;
+    const float ACEL   = por_nivel(o, 240, 300, 380);       // px/s^2
+    const float ATRASO = por_nivel(o, 0.13f, 0.10f, 0.08f); // segs. entre uma bala e a vizinha (volta = N*ATRASO)
     // recuo (telegrafa o ataque): a bala sai pra fora com velocidade do recuo e a acel faz voltar pro centro
     const float RECUO  = 60.0f;    // px/s
     const float TAM    = 8 * o.escala;
@@ -326,9 +335,9 @@ static void padrao_circulo(Game *g, Onda o, int n) {
 // o ponto e sorteado dentro da caixa longe da alma: no centro fixo, a alma
 // parada no meio levaria dano no instante em que as balas nascem.
 static void padrao_explosao(Game *g, Onda o, int n) {
-    const int   N     = 12;
+    const int   N     = (int)por_nivel(o, 10, 12, 14);
     const float VEL   = 30.0f;    // px/s logo que sai
-    const float ACEL  = 220.0f;   // px/s^2 pra fora
+    const float ACEL  = por_nivel(o, 180, 220, 270);   // px/s^2 pra fora
     const float AVISO = 0.7f;     // s empilhadas antes de explodir
     const float LONGE = 50.0f;    // distancia minima da alma
     const float TAM   = 6 * o.escala;
@@ -366,10 +375,10 @@ static void padrao_barreira(Game *g, Onda o, int n) {
     // static Texture2D barreira = { 0 };
     // if (barreira.id == 0) barreira = LoadTexture("assets/barreira.png");
 
-    const float VEL    = 140.0f;          // px/s pro lado
+    const float VEL    = por_nivel(o, 115, 140, 170);   // px/s pro lado
     const int   DIR    = 1;               // +1 direita, -1 esquerda
-    const float LARG   = 12 * o.escala;   
-    const float FRESTA = 2.0f * TAM_ALMA; // altura da fresta
+    const float LARG   = 12 * o.escala;
+    const float FRESTA = por_nivel(o, 2.5f, 2.0f, 1.6f) * TAM_ALMA; // altura da fresta
 
     Rectangle in = interior(g);
     float topo  = in.y;
@@ -415,9 +424,9 @@ static void padrao_barreira(Game *g, Onda o, int n) {
 // caixa. alterna esquerda/direita; a altura e aleatoria 
 // em uma area ao redor do centro da caixa cobrindo 1.5x tamanho del
 static void padrao_espingarda(Game *g, Onda o, int n) {
-    const int   K      = 6;                 // balas por disparo
+    const int   K      = (int)por_nivel(o, 4, 6, 8);    // balas por disparo
     const float ABERTO = 60 * DEG2RAD;      // abertura do leque
-    const float VEL    = 140.0f;            // px/s
+    const float VEL    = por_nivel(o, 115, 140, 170);   // px/s
     const float DIST   = 50.0f;             // distancia da origem ate parde da caixa
     const float TAM    = 6 * o.escala;
 
@@ -491,7 +500,7 @@ static void padrao_faca(Game *g, Onda o, int n) {
     (void)n;
 
     const float RAIO  = 120.0f;   // distancia do centro da caixa onde a faca nasce
-    const float SEGUE = 0.6f;     // s acompanhando a alma (mesma distancia, mesma mira)
+    const float SEGUE = por_nivel(o, 0.8f, 0.6f, 0.45f); // s acompanhando a alma (mesma distancia, mesma mira)
     const float AVISO = 0.0f;     // s congelada antes de disparar
 
     Vector2 c = centro(g->caixa);
@@ -510,8 +519,8 @@ static void padrao_faca(Game *g, Onda o, int n) {
 static void padrao_facas_cruz(Game *g, Onda o, int n) {
     (void)n;
     const float DIST  = 100.0f;   // distancia da ponta ate a alma
-    const float SEGUE = 0.8f;     // s acompanhando
-    const float AVISO = 0.35f;    // s congeladas antes de fechar
+    const float SEGUE = por_nivel(o, 1.0f, 0.8f, 0.6f);     // s acompanhando
+    const float AVISO = por_nivel(o, 0.45f, 0.35f, 0.25f);  // s congeladas antes de fechar
 
     float lx = GetRandomValue(0, 1) ? 1.0f : -1.0f;   // +1 = horizontal vem da direita
     float ly = GetRandomValue(0, 1) ? 1.0f : -1.0f;   // +1 = vertical vem de baixo
@@ -532,9 +541,9 @@ static void padrao_gaiola(Game *g, Onda o, int n) {
     (void)n;
     const int   N      = 40;                // balas no circulo
     const float FINAL  = TAM_ALMA;          // raio em que some
-    const float VEL    = 80.0f;             // px/s fechando
+    const float VEL    = por_nivel(o, 65, 80, 100);   // px/s fechando
     const float TAM    = 6 * o.escala;
-    const float ESPERA = 0.4f;              // segs. parada antes de fechar
+    const float ESPERA = por_nivel(o, 0.5f, 0.4f, 0.3f);  // segs. parada antes de fechar
 
     // centro sorteado dentro da arena, com folga pra alma caber em volta dele
     Rectangle in = interior(g);
@@ -571,8 +580,8 @@ static void padrao_gaiola(Game *g, Onda o, int n) {
 static void padrao_enxame(Game *g, Onda o, int n) {
     (void)n;
     const float RAIO     = 130.0f;   // distancia do centro da caixa onde nascem
-    const float VEL      = 80.0f;    // px/s
-    const float PERSEGUE = 0.7f;     // rad/s: curva fraca
+    const float VEL      = por_nivel(o, 70, 80, 95);        // px/s
+    const float PERSEGUE = por_nivel(o, 0.5f, 0.7f, 0.9f);  // rad/s: curva fraca
     const float VIDA     = 4.0f;     // s
     const float TAM      = 4 * o.escala;
 
@@ -594,8 +603,8 @@ static void padrao_enxame(Game *g, Onda o, int n) {
 // virando forte. parado, leva dano. a cada disparo entra mais uma, no canto
 // mais longe da alma, e todas somem juntas no fim da onda
 static void padrao_perseguidora(Game *g, Onda o, int n) {
-    const float VEL   = 105.0f;   // px/s (alma anda 120 reto, ~170 na diagonal)
-    const float GIRO  = 5.0f;     // rad/s: curva forte
+    const float VEL   = por_nivel(o, 95, 105, 112);   // px/s (alma anda 120 reto, ~170 na diagonal)
+    const float GIRO  = por_nivel(o, 4, 5, 6);        // rad/s: curva forte
     const float AVISO = 0.8f;     // s parada antes de comecar a correr
     const float TAM   = 8 * o.escala;
 
@@ -623,10 +632,16 @@ static void padrao_perseguidora(Game *g, Onda o, int n) {
 
 // ---------------------------------------------------------------------------------
 
+// parry: uma bala so por nivel, que vai e volta entre a alma e o inimigo.
+// bloqueios pra vencer: nivel 1 = 1, nivel 2 = 3, nivel 3 = 5 (o inimigo devolve
+// bloqueios - 1 vezes). cada devolucao acelera a bala (MULT_REBATE); como a bala
+// nasce de novo em cada nivel, a velocidade volta ao normal.
+// errou o bloqueio: toma dano e a bala volta a cair (parry.c), ate completar
 static void padrao_parry(Game *g, Onda o, int n) {
     if (n > 0) return;
     g->parry = true;
     g->rally_ganho = false;
+    int bloqueios = 2 * o.nivel - 1;
 
     Rectangle in = interior(g);
     float h = 15;
@@ -639,7 +654,7 @@ static void padrao_parry(Game *g, Onda o, int n) {
         .recorta   = false,
         .persiste  = true,
         .rebativel = true,
-        .rebates   = g->contador_inimigo,
+        .rebates   = bloqueios - 1,
     });
     g->contador_inimigo++;
 }
@@ -648,26 +663,54 @@ static void padrao_parry(Game *g, Onda o, int n) {
 
 // nova onda ou novo ataque: so uma linha aqui
 static Onda ondas[] = {
-    // padrao                duracao  intervalo  escala  atraso (opcional)
-    // { padrao_chuva,          15.0f,   0.18f,     1.0f,   0.8f },   // chuva leve
-    // { padrao_chuva_lado,     10.0f,   0.2f,      1.0f,   0.0f },   // chuva lateral, lado sorteado
-    // { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 0 devolvida
-    // { padrao_circulo,        16.0f,   2.0f,      1.0f,   0.8f },   // circulo do jevil
-    // { padrao_explosao,       10.0f,   1.2f,      1.0f,   0.0f },   // explosao
-    { padrao_gaiola,         11.0f,   3.6f,      1.0f,   0.0f },   // gaiola fechando num ponto
-    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 1 devolvida
-    { padrao_barreira,       12.0f,   0.4f,      1.0f,   0.8f },   // barreiras do sans
-    { padrao_chuva_laser,    10.0f,   1.8f,      1.0f,   0.0f },   // chuva com laser e folga
-    { padrao_chuva_alterna,  10.0f,   0.2f,      1.0f,   0.0f },   // chuva lateral alternando
-    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 2 devolvida
-    { padrao_espingarda,      8.0f,   0.8f,      1.0f,   0.8f },   // espingarda
-    { padrao_quica,          10.0f,   0.5f,      1.0f,   0.0f },   // golpes quicando
-    { padrao_enxame,         10.0f,   0.36f,     1.0f,   0.0f },   // enxame
-    { padrao_perseguidora,    9.0f,   3.0f,      1.0f,   0.0f },   // perseguidoras (3)
-    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 3 devolvidas
-    { padrao_faca,           15.0f,   0.6f,      1.0f,   0.8f },   // facas com aviso
-    { padrao_facas_cruz,     10.0f,   1.6f,      1.0f,   0.0f },   // facas em cruz
-    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f },   // pong, 4 devolvida
+    // padrao                duracao  intervalo  escala  atraso  nivel
+    // o resto da dificuldade (velocidade, quantidade...) fica em cada padrao, via por_nivel
+    // fora da tabela (dá pra usar): padrao_chuva_lado, padrao_explosao
+
+    // NIVEL 1: facil
+    { padrao_chuva,          12.0f,   0.30f,     1.0f,   0.8f,   1 },   // chuva
+    { padrao_circulo,        14.0f,   2.4f,      1.0f,   0.5f,   1 },   // circulo do jevil
+    { padrao_gaiola,         11.0f,   4.2f,      1.0f,   0.0f,   1 },   // gaiola fechando num ponto
+    { padrao_barreira,       10.0f,   0.6f,      1.0f,   0.5f,   1 },   // barreiras do sans
+    { padrao_chuva_laser,    10.0f,   2.2f,      1.0f,   0.0f,   1 },   // chuva com laser e folga
+    { padrao_chuva_alterna,  10.0f,   0.26f,     1.0f,   0.0f,   1 },   // chuva lateral alternando
+    { padrao_espingarda,      8.0f,   1.0f,      1.0f,   0.5f,   1 },   // espingarda
+    { padrao_quica,          10.0f,   0.65f,     1.0f,   0.0f,   1 },   // golpes quicando
+    { padrao_enxame,         10.0f,   0.45f,     1.0f,   0.0f,   1 },   // enxame
+    { padrao_perseguidora,    9.0f,   4.6f,      1.0f,   0.0f,   1 },   // perseguidoras (2)
+    { padrao_faca,           12.0f,   0.8f,      1.0f,   0.5f,   1 },   // facas com aviso
+    { padrao_facas_cruz,     10.0f,   2.0f,      1.0f,   0.0f,   1 },   // facas em cruz
+    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f,   1 },   // pong, 1 bloqueio
+
+    // NIVEL 2: medio (valores originais)
+    { padrao_chuva,          15.0f,   0.22f,     1.0f,   0.5f,   2 },
+    { padrao_circulo,        16.0f,   2.0f,      1.0f,   0.5f,   2 },
+    { padrao_gaiola,         11.0f,   3.6f,      1.0f,   0.0f,   2 },
+    { padrao_barreira,       12.0f,   0.5f,      1.0f,   0.5f,   2 },
+    { padrao_chuva_laser,    10.0f,   1.8f,      1.0f,   0.0f,   2 },
+    { padrao_chuva_alterna,  10.0f,   0.2f,      1.0f,   0.0f,   2 },
+    { padrao_espingarda,      8.0f,   0.8f,      1.0f,   0.5f,   2 },
+    { padrao_quica,          10.0f,   0.5f,      1.0f,   0.0f,   2 },
+    { padrao_enxame,         10.0f,   0.36f,     1.0f,   0.0f,   2 },
+    { padrao_perseguidora,    9.0f,   3.0f,      1.0f,   0.0f,   2 },   // perseguidoras (3)
+    { padrao_faca,           15.0f,   0.6f,      1.0f,   0.5f,   2 },
+    { padrao_facas_cruz,     10.0f,   1.6f,      1.0f,   0.0f,   2 },
+    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f,   2 },   // pong, 3 bloqueios
+
+    // NIVEL 3: dificil
+    { padrao_chuva,          15.0f,   0.18f,     1.25f,  0.5f,   3 },
+    { padrao_circulo,        16.0f,   1.6f,      1.0f,   0.5f,   3 },
+    { padrao_gaiola,         11.0f,   3.0f,      1.0f,   0.0f,   3 },
+    { padrao_barreira,       12.0f,   0.4f,      1.0f,   0.5f,   3 },
+    { padrao_chuva_laser,    10.0f,   1.5f,      1.0f,   0.0f,   3 },
+    { padrao_chuva_alterna,  10.0f,   0.16f,     1.0f,   0.0f,   3 },
+    { padrao_espingarda,     10.0f,   0.6f,      1.0f,   0.5f,   3 },
+    { padrao_quica,          10.0f,   0.4f,      1.0f,   0.0f,   3 },
+    { padrao_enxame,         10.0f,   0.28f,     1.0f,   0.0f,   3 },
+    { padrao_perseguidora,    9.0f,   2.4f,      1.0f,   0.0f,   3 },   // perseguidoras (4)
+    { padrao_faca,           15.0f,   0.5f,      1.0f,   0.5f,   3 },
+    { padrao_facas_cruz,     10.0f,   1.3f,      1.0f,   0.0f,   3 },
+    { padrao_parry,           0.1f,   99.0f,     1.0f,   0.0f,   3 },   // pong, 5 bloqueios
 };
 
 // quantidade de ondas = tamanho total / tamanho de cada
@@ -701,12 +744,15 @@ bool att_ondas(Game *g, float dt) {
     }
 
     if (t > atual.duracao && !tem_balas(g)) {
-        // errou o pong: repete a mesma onda com os mesmos rebates
-        if (atual.padrao == padrao_parry && !g->rally_ganho) g->contador_inimigo--;
-        else g->onda++;
+        // errou o pong: repete a mesma onda (os rebates vem do nivel).
+        // na pratica a bala ja volta a cair sozinha quando erra (parry.c), isso e garantia
+        if (!(atual.padrao == padrao_parry && !g->rally_ganho)) g->onda++;
         g->tempoOnda = -PAUSA_ONDAS;   // negativo: espera antes do 1o disparo
         g->disparo = 0;
         g->parry = 0;
+
+        // comecou um nivel novo: vida cheia
+        if (g->onda < NUM_ONDAS && ondas[g->onda].nivel != atual.nivel) g->hp = 100;
     }
     return g->onda >= NUM_ONDAS;
 }

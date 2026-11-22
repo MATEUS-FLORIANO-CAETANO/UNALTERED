@@ -30,6 +30,14 @@ void att_parry(Game *g, bool apertou, float dt) {
             efeito_parry();
         }
 
+        // errou o bloqueio (o dano ja foi em entidades.c): passou do fundo da caixa,
+        // volta pra baixo dos olhos e cai de novo, na mesma velocidade.
+        // o ataque so acaba quando completar os bloqueios do nivel
+        if (b->vel.y > 0 && b->r.y > g->caixa.y + g->caixa.height) {
+            b->r.y = LINHA_INIMIGO + 5;
+            b->espera = 0.5f;
+        }
+
         // chegou no inimigo (subindo): devolve ou some
         if (b->vel.y < 0 && b->r.y <= LINHA_INIMIGO) {
             if (b->rebates > 0) {
