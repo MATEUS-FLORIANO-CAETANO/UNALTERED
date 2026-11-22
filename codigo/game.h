@@ -88,7 +88,7 @@ typedef struct {
     float janela_parry;   // segs. de hitbox de parry ativa restantes
 } Game;
 
-#define LINHA_INIMIGO 170   // base dos olhos (y=130, raio 40)
+#define LINHA_INIMIGO 190   // base dos olhos (y=110, raio 80)
 #define PAUSA_ONDAS 0.8f    // segs. de respiro entre ondas
 #define DURACAO_AVISO 3.0f  // segs. da tela "WAVE n" no comeco de cada nivel
 #define VEL_FOCO 0.5f       // multiplica vel. da alma no modo foco

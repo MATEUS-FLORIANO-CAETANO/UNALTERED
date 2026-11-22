@@ -5,7 +5,7 @@
 
 #define RAIO_ESCLERA 80.0f
 #define RAIO_IRIS    24.0f
-#define OLHOS_Y      130.0f
+#define OLHOS_Y      110.0f
 
 #define PISCADA_DUR  0.15f   // segs. pra fechar e abrir no rebate
 #define RECUO_DUR    0.30f   // segs. pra voltar ao lugar

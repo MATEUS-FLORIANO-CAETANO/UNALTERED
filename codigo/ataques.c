@@ -665,6 +665,7 @@ static Onda ondas[] = {
     // fora da tabela por enquanto: padrao_chuva_lado, padrao_explosao
 
     //NIVEL 1: facil
+    
     { padrao_chuva,          12.0f,   0.30f,     1.0f,   0.8f,   1 },   // chuva
     { padrao_circulo,        14.0f,   2.4f,      1.5f,   0.5f,   1 },   // circulo do jevil
     { padrao_gaiola,         11.0f,   4.2f,      1.0f,   0.0f,   1 },   // gaiola fechando num ponto
