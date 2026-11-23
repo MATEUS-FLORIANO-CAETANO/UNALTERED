@@ -1,6 +1,6 @@
 # os usos de IA estão marcados com // CLAUDE no codigo
 
-PRINCPAL USO: configurar builds pra windows e linux (genérico), e a criação da Makefile
+PRINCIPAL USO: configurar builds pra windows, web e linux (genérico), e a criação da Makefile
 
 ## Casos notaveis: 
 1. implementação da resolução virtual x real com 2x escala (para aumentar tamanho da tela sem precisar mexer nos valores internos)
