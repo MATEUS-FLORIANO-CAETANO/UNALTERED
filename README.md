@@ -6,7 +6,13 @@
 * Rafael Zapora
 * Mateus Floriano Caetano
 
-# Arquitetura:
+
+# Rodar:
+os executáveis estão em build/. 
+por padrão, só rodar, mas se for retirar da pasta certifique-se que o diretório deles está adjacente ao dos assets
+
+
+# Arquitetura
 ## game.h
 Header. todo arquivo .c inclui ele. declara funções e protótipos de estruturas que os outros arquivos usam, como o struct Game que mantém o estado do jogo.
 
@@ -27,9 +33,6 @@ decide quando e onde as coisas nascem, por meio de funções que chamam spawn_ba
 também gerencia as sequencias de ataques, com duração e intervalo entre cada bala.
 NÃO move balas e nem verifica colisão, isso é trabalho do entidades.c
 
-# Rodar:
-os executáveis estão em build/. 
-por padrão, só rodar, mas se for retirar da pasta certifique-se que o diretório deles está adjacente ao dos assets
 
 # Como compilar
 
