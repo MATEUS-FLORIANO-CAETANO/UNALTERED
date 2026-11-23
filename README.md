@@ -10,6 +10,13 @@
 
 ---
 
+## Como jogar
+
+WASD/setas (apertando tab) -> movimentação
+ESPAÇO -> parry, somente balas laranjas (você vai saber quando)
+
+---
+
 ## Rodar
 
 Os executáveis estão em `build/`.
