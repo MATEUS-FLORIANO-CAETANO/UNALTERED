@@ -1,12 +1,12 @@
 # UNALTERED
 
-* Este projeto é uma especie de "demake" do sistema de combate dos jogos UNDERTALE e DELTARUNE
-* 
+* Este projeto é uma especie de "demake" do sistema de combate do jogo UNDERTALE
+  
 * Marcos Luan dos Santos
 * Rafael Zapora
 * Mateus Floriano Caetano
 
-Arquitetura:
+# Arquitetura:
 ## game.h
 Header. todo arquivo .c inclui ele. declara funções e protótipos de estruturas que os outros arquivos usam, como o struct Game que mantém o estado do jogo.
 
@@ -19,16 +19,19 @@ Gerencia:
 5. chama funcoes principais dos outros arquivos: atualiza_entidades, desenha_entidades, etc.
  
 ## entidades.c
- responsável por realmente criar as balas e atualizar a posição das mesmas, e verificar colisão.
- ## ataques.c
-
+responsável por realmente criar as balas e atualizar a posição das mesmas, e verificar colisão.
+ 
+## ataques.c
 padrões de ataque e sequência de ondas.
 decide quando e onde as coisas nascem, por meio de funções que chamam spawn_bala da entidades.c (que recebe tamanho, posicao, e velocidade) pra gerar determinado padrão de ataque.
 também gerencia as sequencias de ataques, com duração e intervalo entre cada bala.
 NÃO move balas e nem verifica colisão, isso é trabalho do entidades.c
 
+# Rodar:
+os executáveis estão em build/. 
+por padrão, só rodar, mas se for retirar da pasta certifique-se que o diretório deles está adjacente ao dos assets
 
-## Como compilar
+# Como compilar
 
 ### NixOS
 ```sh
