@@ -79,5 +79,4 @@ Padrões de ataque e sequência de ondas.
 Decide quando e onde as coisas nascem, por meio de funções que chamam `spawn_bala` da `entidades.c` (que recebe tamanho, posicao, e velocidade) pra gerar determinado padrão de ataque.
 
 Também gerencia as sequencias de ataques, com duração e intervalo entre cada bala.
-
-> **NÃO** move balas e nem verifica colisão, isso é trabalho do `entidades.c`
+não move balas e nem verifica colisão, isso fica no `entidades.c`
