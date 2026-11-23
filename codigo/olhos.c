@@ -52,13 +52,6 @@ static void desenha_olho(Vector2 centro, Vector2 alvo, Color corIris, float fech
     if (fecha > 0)
         DrawRectangle(centro.x - rEsc, centro.y - rEsc,
                       rEsc * 2, rEsc * 2 * fecha, BLACK);
-
-    /* versao com textura (quando assets/esclera.png e assets/iris.png existirem):
-       1. raios vem do tamanho das imagens (texEsclera.width / 2, texIris.width / 2)
-       2. troca os tres DrawCircleV por (DrawTexture desenha do canto, entao centraliza):
-            DrawTexture(texEsclera, centro.x - texEsclera.width / 2.0f, centro.y - texEsclera.height / 2.0f, WHITE);
-            DrawTexture(texIris,    iris.x   - texIris.width    / 2.0f, iris.y   - texIris.height    / 2.0f, corIris);
-    */
 }
 
 void desenha_olhos(Game *g) {

@@ -104,10 +104,6 @@ int main(void)
     dano = LoadSound("assets/snd-hurt1.ogg");      
     alma = LoadTexture("assets/alma1.png");
 
-    // olhos: descomentar quando os arquivos existirem (ver desenha_olho em olhos.c)
-    // Texture2D esclera = LoadTexture("assets/esclera.png");
-    // Texture2D iris    = LoadTexture("assets/iris.png");
-
     //  Padrao WASD
     char actionSet = 0;
     SetActionsDefault();
@@ -196,8 +192,6 @@ int main(void)
     UnloadRenderTexture(alvo);
     UnloadSound(dano);
     UnloadTexture(alma);
-    // UnloadTexture(esclera);
-    // UnloadTexture(iris);
     CloseWindow();
        
 
