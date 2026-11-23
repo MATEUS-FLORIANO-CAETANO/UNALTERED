@@ -13,15 +13,16 @@
 ## Como jogar
 
 WASD/setas (apertando tab) -> movimentação
-
 ESPAÇO -> parry, somente balas laranjas (você vai saber quando)
 
 ---
 
 ## Rodar
 
-Os executáveis estão em `build/`.
+Versao web: https://im-luan.itch.io/unaltered 
+senha: programacaoum
 
+Os executáveis estão em `build/`.
 Por padrão é só rodar, mas se for retirar da pasta certifique-se que o diretório deles está adjacente ao dos `assets`.
 
 ---
