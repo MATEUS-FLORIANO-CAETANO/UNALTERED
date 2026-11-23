@@ -7,14 +7,14 @@
 * Mateus Floriano Caetano
 
 
-# Rodar:
+# Rodar
 os executáveis estão em build/. 
-por padrão, só rodar, mas se for retirar da pasta certifique-se que o diretório deles está adjacente ao dos assets
+por padrão é só rodar, mas se for retirar da pasta certifique-se que o diretório deles está adjacente ao dos assets
 
 
 # Arquitetura
-## game.h
-Header. todo arquivo .c inclui ele. declara funções e protótipos de estruturas que os outros arquivos usam, como o struct Game que mantém o estado do jogo.
+## game.h: header
+todo arquivo .c inclui ele. declara funções e protótipos de estruturas que os outros arquivos usam, como o struct Game que mantém o estado do jogo.
 
 ## main.c 
 Gerencia:
