@@ -8,5 +8,9 @@ pkgs.mkShell {
     gnumake
     # cross-compiler pra windows
     pkgsCross.mingwW64.buildPackages.gcc
+    # build pra web (make web / web-zip / web-serve)
+    emscripten
+    zip
+    python3
   ];
 }

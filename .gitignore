@@ -5,3 +5,6 @@ build/obj-win/
 build/vendor/
 rodar-wine.sh
 codigo/*.o
+build/obj-web/
+build/web/
+build/unaltered-web.zip

@@ -58,8 +58,42 @@ $(WIN_OBJDIR)/%.o: $(SRCDIR)/%.c $(DEPS) | $(WIN_OBJDIR)
 $(WIN_OBJDIR):
 	mkdir -p $@
 
-clean:
-	rm -f unaltered unaltered.exe
-	rm -rf $(OBJDIR) $(WIN_OBJDIR)
+# ---- build pro navegador (WebGL, com emscripten) ----
+# raylib pre-compilado pra web: raylib-6.0_webassembly.zip das releases do raylib
+# sai em web/ (index.html + .js + .wasm + .data); `make web-zip` gera o zip pro itch.io
+WEB_CC     := emcc
+WEB_RAYLIB := $(MKDIR)vendor/raylib-6.0_webassembly
+WEB_CFLAGS := -Wall -Wextra -O2 -I$(WEB_RAYLIB)/include -DPLATFORM_WEB
+# ASYNCIFY: deixa o while (!WindowShouldClose()) do main.c funcionar sem mudar o codigo
+# --preload-file: empacota assets/ no .data, montado em /assets (main.c faz cd pra /)
+WEB_LDFLAGS := -L$(WEB_RAYLIB)/lib -lraylib.web -sUSE_GLFW=3 -sASYNCIFY \
+               -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=67108864 \
+               --preload-file $(MKDIR)../assets@/assets
+WEB_OBJDIR := $(MKDIR)obj-web
+WEB_OBJS   := $(patsubst $(SRCDIR)/%.c,$(WEB_OBJDIR)/%.o,$(SRCS))
+WEB_OUT    := $(MKDIR)web
 
-.PHONY: clean windows
+web: $(WEB_OUT)/index.html
+
+$(WEB_OUT)/index.html: $(WEB_OBJS) $(wildcard $(MKDIR)../assets/*) | $(WEB_OUT)
+	$(WEB_CC) $(WEB_CFLAGS) -o $@ $(WEB_OBJS) $(WEB_LDFLAGS)
+
+$(WEB_OBJDIR)/%.o: $(SRCDIR)/%.c $(DEPS) | $(WEB_OBJDIR)
+	$(WEB_CC) $(WEB_CFLAGS) -c -o $@ $<
+
+$(WEB_OBJDIR) $(WEB_OUT):
+	mkdir -p $@
+
+# zip com index.html na raiz (o itch.io exige isso)
+web-zip: web
+	cd $(WEB_OUT) && rm -f ../unaltered-web.zip && zip -q ../unaltered-web.zip index.html index.js index.wasm index.data
+
+# testar local: http://localhost:8080 (abrir o index.html direto nao funciona)
+web-serve: web
+	cd $(WEB_OUT) && python3 -m http.server 8080
+
+clean:
+	rm -f unaltered unaltered.exe unaltered-web.zip
+	rm -rf $(OBJDIR) $(WIN_OBJDIR) $(WEB_OBJDIR) $(WEB_OUT)
+
+.PHONY: clean windows web web-zip web-serve
