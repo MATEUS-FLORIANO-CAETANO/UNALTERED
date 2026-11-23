@@ -5,7 +5,6 @@
 
 #define RAIO_ESCLERA 80.0f
 #define RAIO_IRIS    24.0f
-#define OLHOS_Y      110.0f
 
 #define PISCADA_DUR  0.15f   // segs. pra fechar e abrir no rebate
 #define RECUO_DUR    0.30f   // segs. pra voltar ao lugar
@@ -34,22 +33,25 @@ static Bala *bala_parry(Game *g) {
 
 // fecha = 0 aberto, 1 fechado. palpebra desce de cima, da cor do fundo
 // adaptado de raylib/examples/shapes/shapes_following_eyes.c
-static void desenha_olho(Vector2 centro, Vector2 alvo, Color corIris, float fecha) {
+// esc = escala do olho (1 = tamanho cheio)
+static void desenha_olho(Vector2 centro, Vector2 alvo, Color corIris, float fecha, float esc) {
+    float rEsc = RAIO_ESCLERA * esc;
+    float rIri = RAIO_IRIS * esc;
     Vector2 iris = alvo;
     // se o alvo esta fora do alcance, prende a iris na borda da esclera na direcao do alvo
-    if (!CheckCollisionPointCircle(iris, centro, RAIO_ESCLERA - RAIO_IRIS)) {
+    if (!CheckCollisionPointCircle(iris, centro, rEsc - rIri)) {
         float angulo = atan2f(alvo.y - centro.y, alvo.x - centro.x);
-        iris.x = centro.x + (RAIO_ESCLERA - RAIO_IRIS) * cosf(angulo);
-        iris.y = centro.y + (RAIO_ESCLERA - RAIO_IRIS) * sinf(angulo);
+        iris.x = centro.x + (rEsc - rIri) * cosf(angulo);
+        iris.y = centro.y + (rEsc - rIri) * sinf(angulo);
     }
 
-    DrawCircleV(centro, RAIO_ESCLERA, WHITE);
-    DrawCircleV(iris, RAIO_IRIS, corIris);
-    DrawCircleV(iris, 5, BLACK);
+    DrawCircleV(centro, rEsc, WHITE);
+    DrawCircleV(iris, rIri, corIris);
+    DrawCircleV(iris, 5 * esc, BLACK);
 
     if (fecha > 0)
-        DrawRectangle(centro.x - RAIO_ESCLERA, centro.y - RAIO_ESCLERA,
-                      RAIO_ESCLERA * 2, RAIO_ESCLERA * 2 * fecha, BLACK);
+        DrawRectangle(centro.x - rEsc, centro.y - rEsc,
+                      rEsc * 2, rEsc * 2 * fecha, BLACK);
 
     /* versao com textura (quando assets/esclera.png e assets/iris.png existirem):
        1. raios vem do tamanho das imagens (texEsclera.width / 2, texIris.width / 2)
@@ -65,7 +67,9 @@ void desenha_olhos(Game *g) {
 
     Color corIris = DARKGREEN;
     float fecha   = 0;
-    float y       = OLHOS_Y;
+    // tamanho por wave: 60% nas waves 1-2, 80% na 3. base fica em LINHA_INIMIGO (onde a bala do parry bate)
+    float esc     = g->nivel_aviso >= 3 ? 0.8f : 0.6f;
+    float y       = LINHA_INIMIGO - RAIO_ESCLERA * esc;
     Bala *b = bala_parry(g);
 
     // REACAO 4: ainda vai devolver = iris colorida. ultima = olho meio fechado (cansado)
@@ -83,7 +87,7 @@ void desenha_olhos(Game *g) {
     // REACAO 3: recua pra cima no impacto e volta
     if (recuo > 0) y -= RECUO_PX * (recuo / RECUO_DUR);
 
-    desenha_olho((Vector2){ VIRTUAL_W / 2.0f, y }, g->jogador, corIris, fecha);
+    desenha_olho((Vector2){ VIRTUAL_W / 2.0f, y }, g->jogador, corIris, fecha, esc);
 
     // desenha_olho((Vector2){ VIRTUAL_W / 2.0f - 50, y }, g->jogador, corIris, fecha);
     // desenha_olho((Vector2){ VIRTUAL_W / 2.0f + 50, y }, g->jogador, corIris, fecha);
