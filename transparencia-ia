@@ -12,7 +12,7 @@ PRINCPAL USO: configurar builds pra windows e linux (genérico), e a criação d
 (tudo revisado pela equipe)
 
 3. bug fix de texturas e sons que nao carregavam devido ao caminho dos arquivos ser relativo ao local do executavel
-4. implementação de efeitos
+4. implementação de alguns efeitos
 5. conserto do rebate
 6. rotação de texturas
 

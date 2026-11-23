@@ -18,7 +18,7 @@ extern Sound dano;
 // guarda declaracoes das funcoes pro compilador. todo arquivo inclui game.h 
 // (compilador copia e cola os conteudos de game.h nos arquivos)
   
-typedef enum { ESTADO_JOGANDO, ESTADO_AVISO, ESTADO_MORTE, ESTADO_VITORIA } estadoGame;
+typedef enum { ESTADO_JOGANDO, ESTADO_AVISO, ESTADO_MORTE, ESTADO_VITORIA, ESTADO_MENU } estadoGame;
 
 // r = hitbox (posicao + tamanho). o sprite e desenhado centralizado nela, pois a
 // imagem costuma ser maior que a parte visivel (ex: gota ~10x13 num png 32x32).

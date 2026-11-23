@@ -50,6 +50,12 @@ static void atualiza_jogando(Game *g, float dt);
 static void desenha_jogando(Game *g);
 static void desenha_titulo(const char *titulo, Color cor);
 static void desenha_fim(Game *g, const char *titulo, Color cor);
+static void desenha_menu(bool pular_onda1);
+
+// texto do menu e do aviso de wave: um pouco a esquerda e bem abaixo do titulo
+#define TEXTO_ENTER "aperte ENTER para começar"
+#define X_MENU 200
+#define Y_MENU 300
 
 static Texture2D alma;
 
@@ -66,6 +72,8 @@ int main(void)
     const int screenHeight = VIRTUAL_H;
     const int escala = 2;
 
+    g.estado = ESTADO_MENU;
+    bool pular_onda1 = false;
     g.hp = 100;
     g.jogador.x = 320;
     g.jogador.y = 240 + 100;
@@ -118,12 +126,18 @@ int main(void)
         switch (g.estado)
         {
         case ESTADO_JOGANDO: if (!congelado) atualiza_jogando(&g, dt); break;
-        case ESTADO_AVISO:   // "WAVE n": tudo parado ate o tempo acabar
-            g.tempo_aviso -= dt;
-            if (g.tempo_aviso <= 0) g.estado = ESTADO_JOGANDO;
+        case ESTADO_AVISO:   // tudo parado ate apertar ENTER (descanso)
+            if (IsKeyPressed(KEY_ENTER)) g.estado = ESTADO_JOGANDO;
             break;
         case ESTADO_MORTE:   break;
         case ESTADO_VITORIA: break;
+        case ESTADO_MENU:    // K liga/desliga pular a onda 1, ENTER comeca
+            if (IsKeyPressed(KEY_K)) pular_onda1 = !pular_onda1;
+            if (IsKeyPressed(KEY_ENTER)) {
+                if (pular_onda1) while (nivel_da_onda(g.onda) == 1) g.onda++;
+                g.estado = ESTADO_JOGANDO;
+            }
+            break;
         }
 
         // tab: WASD <---> SETAS
@@ -149,9 +163,13 @@ int main(void)
             switch (g.estado)
             {
             case ESTADO_JOGANDO: desenha_jogando(&g); break;
-            case ESTADO_AVISO:   desenha_titulo(TextFormat("WAVE %d", g.nivel_aviso), WHITE); break;
+            case ESTADO_AVISO:
+                desenha_titulo(TextFormat("WAVE %d", g.nivel_aviso), WHITE);
+                DrawText(TEXTO_ENTER, X_MENU, Y_MENU, 20, WHITE);
+                break;
             case ESTADO_MORTE:   desenha_fim(&g, "Você Morreu!", RED); break;
             case ESTADO_VITORIA: desenha_fim(&g, "Você Venceu!", GREEN); break;
+            case ESTADO_MENU:    desenha_menu(pular_onda1); break;
             }
 
         EndTextureMode();
@@ -277,6 +295,21 @@ static void desenha_alma(Vector2 pos)
 static void desenha_titulo(const char *titulo, Color cor)
 {
     DrawText(titulo, VIRTUAL_W / 2 - MeasureText(titulo, 40) / 2, 130 - 20, 40, cor);
+}
+
+// tela inicial: titulo no topo, controles e opcoes embaixo
+static void desenha_menu(bool pular_onda1)
+{
+    desenha_titulo("UNALTERED", WHITE);
+    const char *linhas[] = {
+        "WASD para movimento",
+        "ESPAÇO pro parry",
+        TextFormat("pular onda 1: aperte K [%s]", pular_onda1 ? "X" : " "),
+        TEXTO_ENTER,
+    };
+    // linha em branco entre os controles e as opcoes
+    for (int i = 0; i < 4; i++)
+        DrawText(linhas[i], X_MENU, Y_MENU + i * 25 + (i >= 2 ? 25 : 0), 20, WHITE);
 }
 
 static void desenha_fim(Game *g, const char *titulo, Color cor)

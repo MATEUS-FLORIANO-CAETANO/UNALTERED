@@ -66,16 +66,24 @@ WEB_RAYLIB := $(MKDIR)vendor/raylib-6.0_webassembly
 WEB_CFLAGS := -Wall -Wextra -O2 -I$(WEB_RAYLIB)/include -DPLATFORM_WEB
 # ASYNCIFY: deixa o while (!WindowShouldClose()) do main.c funcionar sem mudar o codigo
 # --preload-file: empacota assets/ no .data, montado em /assets (main.c faz cd pra /)
-WEB_LDFLAGS := -L$(WEB_RAYLIB)/lib -lraylib.web -sUSE_GLFW=3 -sASYNCIFY \
+# STACK_SIZE: o padrao do emscripten e 64KB, e o Game g do main (com balas[256]) nao cabe.
+# no Linux/Windows a pilha e ~8MB, por isso so quebra na web
+WEB_LDFLAGS := -L$(WEB_RAYLIB)/lib -lraylib.web -sUSE_GLFW=3 -sASYNCIFY -sSTACK_SIZE=1048576 \
                -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=67108864 \
-               --preload-file $(MKDIR)../assets@/assets
+               --preload-file $(MKDIR)../assets@/assets \
+               --shell-file $(MKDIR)web-shell.html
+# make web DEBUG=1: nomes de funcao no stack trace + checagens do emscripten (lento)
+ifdef DEBUG
+WEB_CFLAGS  += -g
+WEB_LDFLAGS += -g -sASSERTIONS=2 -sSAFE_HEAP=1 -sSTACK_OVERFLOW_CHECK=2
+endif
 WEB_OBJDIR := $(MKDIR)obj-web
 WEB_OBJS   := $(patsubst $(SRCDIR)/%.c,$(WEB_OBJDIR)/%.o,$(SRCS))
 WEB_OUT    := $(MKDIR)web
 
 web: $(WEB_OUT)/index.html
 
-$(WEB_OUT)/index.html: $(WEB_OBJS) $(wildcard $(MKDIR)../assets/*) | $(WEB_OUT)
+$(WEB_OUT)/index.html: $(WEB_OBJS) $(wildcard $(MKDIR)../assets/*) $(MKDIR)web-shell.html | $(WEB_OUT)
 	$(WEB_CC) $(WEB_CFLAGS) -o $@ $(WEB_OBJS) $(WEB_LDFLAGS)
 
 $(WEB_OBJDIR)/%.o: $(SRCDIR)/%.c $(DEPS) | $(WEB_OBJDIR)
